@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>PixelStore - Matériel Informatique</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/style.css">
+    </head>
+    <body>
+
+            <!-- ==================== HEADER ==================== -->
+        <header class="header">
+            <div class="container header-container">
+
+                <!-- Logo -->
+                <div class="logo">
+                    <a href="index.html">Pixel<span class="logo-accent">Store</span></a>
+                </div>
+
+                <!-- Navigation principale -->
+                <nav class="nav">
+                    <ul class="nav-list">
+                        <li><a href="index.html" class="nav-link active">Accueil</a></li>
+                        <li><a href="catalogue.html" class="nav-link">Catalogue</a></li>
+                        <li><a href="index.html#apropos">À propos</a></li>
+                        <li><a href="#contact" class="nav-link">Contact</a></li>
+                    </ul>
+                </nav>
+
+                <!-- Icônes d'action (theme, wishlist, panier) -->
+                <div class="header-actions">
+
+                    <!-- Bouton toggle mode sombre/clair -->
+                    <button class="icon-btn" id="theme-toggle" aria-label="Changer de thème">
+                        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        </svg>
+                        <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </button>
+
+                    <!-- Icône Wishlist -->
+                    <a href="#" class="icon-btn" aria-label="Liste de souhaits">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                    </a>
+
+                    <!-- Icône Panier avec badge compteur -->
+                    <a href="panier.html" class="icon-btn cart-btn" aria-label="Panier">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    <span class="cart-badge" id="cart-count">0</span>
+                    </a>
+
+                    <!-- Menu burger (mobile) -->
+                    <button class="icon-btn mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
+
+                </div>
+                <!-- Menu mobile déroulant (caché par défaut) -->
+                <div class="mobile-nav" id="mobile-nav">
+                    <ul>
+                        <li><a href="index.html" class="nav-link active">Accueil</a></li>
+                        <li><a href="catalogue.html" class="nav-link">Catalogue</a></li>
+                        <li><a href="index.html#categories" class="nav-link">Catégories</a></li>
+                        <li><a href="index.html#apropos" class="nav-link">À propos</a></li>
+                        <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+                    </ul>
+                </div>
+
+            </div>
+        </header>
+
+
+        <!-- ==================== HERO SECTION ==================== -->
+        
+
+        <section class="hero">
+            
+            <!-- Image de fond -->
+            <div class="hero-bg">
+                <img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=1600&q=80" alt="Setup informatique moderne">
+                <div class="hero-overlay"></div>
+            </div>
+
+            <!-- Contenu centré par-dessus l'image -->
+            <div class="container hero-container">
+                <div class="hero-content">
+                    <span class="hero-badge">Livraison rapide disponible</span>
+                    <h1 class="hero-title">Votre matériel informatique, <span class="text-accent">au meilleur prix</span></h1>
+    
+                    <p class="hero-description">Qualité garantie. Prix transparents.</p>
+                    
+                    <div class="hero-actions">
+                        <a href="catalogue.html" class="btn btn-primary">Voir le catalogue</a>
+                        <a href="#categories" class="btn btn-secondary">Explorer</a>
+                    </div>
+                </div>
+            </div>
+            <label for="femme">famme</label>
+            <input type="radio">
+        <label for="homme">name</label>
+
+        </section>
+
+
+       <!-- ==================== CATÉGORIES VEDETTES ==================== -->
+
+
+        <section class="categories" id="categories">
+            <div class="container">
+
+                <div class="section-header">
+                    <span class="section-tag">Nos rayons</span>
+                    <h2 class="section-title">Explorez nos catégories</h2>
+                    <p class="section-subtitle">Trouvez exactement ce dont vous avez besoin</p>
+                </div>
+
+                <div class="categories-grid">
+
+                    <a href="catalogue.html" class="category-card">
+                        <div class="category-image">
+                            <img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=500&q=80" alt="Ordinateurs portables">
+                        </div>
+                        <div class="category-info">
+                            <div class="category-text">
+                                <h3>Ordinateurs</h3>
+                                <span>32 produits</span>
+                            </div>
+                            <div class="category-arrow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a href="catalogue.html" class="category-card">
+                        <div class="category-image">
+                            <img src="https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500&q=80" alt="Claviers">
+                        </div>
+                        <div class="category-info">
+                            <div class="category-text">
+                                <h3>Claviers</h3>
+                                <span>18 produits</span>
+                            </div>
+                            <div class="category-arrow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a href="catalogue.html" class="category-card">
+                        <div class="category-image">
+                            <img src="https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=500&q=80" alt="Souris">
+                        </div>
+                        <div class="category-info">
+                            <div class="category-text">
+                                <h3>Souris</h3>
+                                <span>24 produits</span>    
+                            </div>
+                            <div class="category-arrow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a href="catalogue.html" class="category-card">
+                        <div class="category-image">
+                            <img src="https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=500&q=80" alt="Écrans">
+                        </div>
+                        <div class="category-info">
+                            <div class="category-text">
+                                <h3>Écrans</h3>
+                                <span>15 produits</span>
+                            </div>
+                            <div class="category-arrow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a href="catalogue.html" class="category-card">
+                        <div class="category-image">
+                            <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80" alt="Casques">
+                        </div>
+                        <div class="category-info">
+                            <div class="category-text">
+                                <h3>Casques</h3>
+                                <span>21 produits</span>
+                            </div>
+                            <div class="category-arrow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a href="catalogue.html" class="category-card">
+                        <div class="category-image">
+                            <img src="https://images.unsplash.com/photo-1591370874773-6702e8f12fd8?w=500&q=80" alt="Composants">
+                        </div>
+                        <div class="category-info">
+                            <div class="category-text">
+                                <h3>Composants</h3>
+                                <span>12 produits</span>
+                            </div>
+                            <div class="category-arrow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
+                </div>
+
+            </div>
+        </section>
+
+        
+        <!-- ==================== À PROPOS ==================== -->
+
+
+        <section class="about" id="apropos">
+            <div class="container about-container">
+
+                <!-- Image -->
+                <div class="about-image">
+                    <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=80" alt="Équipe PixelStore">
+                    <div class="about-badge-float">
+                        <strong>5+</strong>
+                        <span>Ans d'expérience</span>
+                    </div>
+                </div>
+
+                <!-- Texte -->
+                <div class="about-content">
+                    <span class="section-tag">Notre histoire</span>
+                    <h2 class="about-title">Une équipe passionnée par la technologie</h2>
+                             
+                    <p class="about-description">
+                        Chez PixelStore, nous croyons que le bon matériel informatique ne devrait pas être un luxe. 
+                        Depuis notre création, nous sélectionnons chaque produit avec rigueur pour garantir qualité, 
+                        durabilité et prix justes à nos clients.
+                    </p>
+
+                    <!-- Points forts -->
+                    <div class="about-features">
+                        <div class="about-feature">
+                            <div class="feature-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 6L9 17l-5-5"></path>
+                                </svg>
+                            </div>
+                            <span>Produits testés et garantis</span>
+                        </div>
+                        <div class="about-feature">
+                            <div class="feature-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 6L9 17l-5-5"></path>
+                                </svg>
+                            </div>
+                            <span>Support client réactif</span>
+                        </div>
+                        <div class="about-feature">
+                            <div class="feature-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 6L9 17l-5-5"></path>
+                            </svg>
+                            </div>
+                            <span>Livraison rapide partout</span>
+                        </div>
+                    </div>
+
+                    <a href="#" class="btn btn-primary">En savoir plus</a>
+                </div>
+
+            </div>
+        </section>
+    
+         
+        <!-- ==================== CONTACT ==================== -->
+
+
+        <section class="contact" id="contact">
+            <div class="container contact-container">
+
+                <!-- Bloc infos de contact (dans une carte, comme le formulaire) -->
+                <div class="contact-info-wrapper">
+                    <div class="contact-info">
+                    <span class="section-tag">Contactez-nous</span>
+                    <h2 class="about-title">Une question ? Parlons-en</h2>
+                    <p class="about-description">
+                        Notre équipe est disponible pour répondre à toutes vos questions, 
+                        que ce soit sur nos produits, une commande ou un conseil technique.
+                    </p>
+
+                    <div class="contact-details">
+                        <div class="contact-item">
+                        <div class="feature-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                        </div>
+                        <div>
+                            <strong>Email</strong>
+                            <p>contact@pixelstore.com</p>
+                        </div>
+                        </div>
+
+                        <div class="contact-item">
+                        <div class="feature-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <strong>Téléphone</strong>
+                            <p>+257 00 000 000</p>
+                        </div>
+                        </div>
+
+                        <div class="contact-item">
+                        <div class="feature-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                        </div>
+                        <div>
+                            <strong>Adresse</strong>
+                            <p>Bujumbura, Burundi</p>
+                        </div>
+                        </div>
+                    </div>
+
+                    <!-- Réseaux sociaux -->
+                    <div class="contact-socials">
+                        <a href="#" class="social-icon" aria-label="Facebook">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                        </svg>
+                        </a>
+                        <a href="#" class="social-icon" aria-label="Instagram">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                        </svg>
+                        </a>
+                        <a href="#" class="social-icon" aria-label="TikTok">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M16.6 5.82s.51.5 0 0A4.278 4.278 0 0 1 15.54 3h-3.09v12.4a2.592 2.592 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48z"></path>
+                        </svg>
+                        </a>
+                    </div>
+                    </div>
+                </div>
+
+                <!-- Formulaire de contact -->
+                <div class="contact-form-wrapper">
+                    <form class="contact-form" id="contact-form">
+
+                    <div class="form-group">
+                        <label for="name">Nom complet</label>
+                        <input type="text" id="name" name="name" placeholder="Votre nom" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" placeholder="votre@email.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subject">Sujet</label>
+                        <input type="text" id="subject" name="subject" placeholder="Objet de votre message" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="message">Message</label>
+                        <textarea id="message" name="message" rows="5" placeholder="Votre message..." required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-full">Envoyer le message</button>
+
+                    <p class="form-success" id="form-success">Message envoyé avec succès !</p>
+
+                    </form>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- ==================== FOOTER ==================== -->
+
+
+        <footer class="footer">
+            <div class="container footer-container">
+
+            <!-- Colonne 1 : Logo + description -->
+            <div class="footer-col footer-brand">
+                <div class="logo footer-logo">
+                <a href="index.html">Pixel<span class="logo-accent">Store</span></a>
+                </div>
+                <p class="footer-description">
+                Votre destination pour du matériel informatique de qualité, 
+                sélectionné avec soin, au meilleur prix.
+                </p>
+                <div class="contact-socials footer-socials">
+                <a href="#" class="social-icon" aria-label="Facebook">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                    </svg>
+                </a>
+                <a href="#" class="social-icon" aria-label="Instagram">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                    </svg>
+                </a>
+                <a href="#" class="social-icon" aria-label="TikTok">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16.6 5.82s.51.5 0 0A4.278 4.278 0 0 1 15.54 3h-3.09v12.4a2.592 2.592 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48z"></path>
+                    </svg>
+                </a>
+                </div>
+            </div>
+
+            <!-- Colonne 2 : Navigation -->
+            <div class="footer-col">
+                <h4>Navigation</h4>
+                <ul class="footer-links">
+                <li><a href="index.html">Accueil</a></li>
+                <li><a href="catalogue.html">Catalogue</a></li>
+                <li><a href="index.html#apropos">À propos</a></li>
+                <li><a href="index.html#contact">Contact</a></li>
+                </ul>
+            </div>
+
+            <!-- Colonne 3 : Catégories -->
+            <div class="footer-col">
+                <h4>Catégories</h4>
+                <ul class="footer-links">
+                <li><a href="catalogue.html">Ordinateurs</a></li>
+                <li><a href="catalogue.html">Claviers</a></li>
+                <li><a href="catalogue.html">Souris</a></li>
+                <li><a href="catalogue.html">Écrans</a></li>
+                <li><a href="catalogue.html">Casques</a></li>
+                </ul>
+            </div>
+
+            <!-- Colonne 4 : Newsletter -->
+            <div class="footer-col">
+                <h4>Restez informé</h4>
+                <p class="footer-newsletter-text">Recevez nos offres et nouveautés directement par email.</p>
+                <form class="newsletter-form" id="newsletter-form">
+                <input type="email" placeholder="Votre email" required>
+                <button type="submit" aria-label="S'abonner">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </button>
+                </form>
+            </div>
+
+            </div>
+
+            <!-- Bas de footer : copyright -->
+            <div class="footer-bottom">
+            <div class="container footer-bottom-container">
+                <p>&copy; 2026 PixelStore. Tous droits réservés.</p>
+                <div class="footer-legal">
+                <a href="#">Conditions d'utilisation</a>
+                <a href="#">Politique de confidentialité</a>
+                </div>
+            </div>
+            </div>
+        </footer>
+
+        <script src="js/main.js"></script>
+
+    </body>
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catalogue - PixelStore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/catalogue.css">
+</head>
+<body>
+
+  <!-- ==================== HEADER ==================== -->
+  <!-- (identique à index.html : logo, nav, icônes, menu mobile) -->
+  <header class="header">
+    <div class="container header-container">
+
+      <div class="logo">
+        <a href="index.html">Pixel<span class="logo-accent">Store</span></a>
+      </div>
+
+      <nav class="nav">
+        <ul class="nav-list">
+          <li><a href="index.html" class="nav-link">Accueil</a></li>
+          <li><a href="catalogue.html" class="nav-link active">Catalogue</a></li>
+          <li><a href="index.html#apropos">À propos</a></li>
+          <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+        </ul>
+      </nav>
+
+      <div class="header-actions">
+        <button class="icon-btn" id="theme-toggle" aria-label="Changer de thème">
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+
+        <a href="#" class="icon-btn" aria-label="Liste de souhaits">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </a>
+
+        <a href="panier.html" class="icon-btn cart-btn" aria-label="Panier">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+          <span class="cart-badge" id="cart-count">0</span>
+        </a>
+
+        <button class="icon-btn mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="mobile-nav" id="mobile-nav">
+        <ul>
+          <li><a href="index.html" class="nav-link">Accueil</a></li>
+          <li><a href="catalogue.html" class="nav-link active">Catalogue</a></li>
+          <li><a href="index.html#categories" class="nav-link">Catégories</a></li>
+          <li><a href="index.html#apropos" class="nav-link">À propos</a></li>
+          <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+        </ul>
+      </div>
+
+    </div>
+  </header>
+ 
+
+  <!-- ==================== EN-TÊTE DE PAGE ==================== -->
+  <section class="page-header">
+    <div class="container">
+      <span class="breadcrumb"><a href="index.html">Accueil</a> / <span>Catalogue</span></span>
+      <h1 class="page-title">Notre Catalogue</h1>
+      <p class="page-subtitle">Découvrez notre sélection complète de matériel informatique</p>
+    </div>
+  </section>
+ 
+
+  <!-- ==================== CATALOGUE PRINCIPAL ==================== -->
+  <section class="catalogue-section">
+    <div class="container catalogue-layout">
+
+      <!-- ========== SIDEBAR FILTRES ========== -->
+      <aside class="filters-sidebar">
+
+        <!-- Recherche -->
+        <div class="filter-block">
+          <h3 class="filter-title">Rechercher</h3>
+          <div class="search-box">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="search-input" placeholder="Nom du produit...">
+          </div>
+        </div>
+
+        <!-- Catégories -->
+        <div class="filter-block">
+          <h3 class="filter-title">Catégorie</h3>
+          <div class="filter-options" id="category-filters">
+            <label class="filter-checkbox">
+              <input type="checkbox" value="all" checked>
+              <span>Toutes les catégories</span>
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" value="ordinateurs">
+              <span>Ordinateurs</span>
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" value="claviers">
+              <span>Claviers</span>
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" value="souris">
+              <span>Souris</span>
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" value="ecrans">
+              <span>Écrans</span>
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" value="casques">
+              <span>Casques</span>
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" value="composants">
+              <span>Composants</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Marques -->
+        <div class="filter-block">
+          <h3 class="filter-title">Marque</h3>
+          <div class="filter-options" id="brand-filters">
+            <label class="filter-checkbox">
+              <input type="checkbox" value="Dell">
+              <span>Dell</span>
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" value="HP">
+              <span>HP</span>
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" value="Logitech">
+              <span>Logitech</span>
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" value="Razer">
+              <span>Razer</span>
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" value="Samsung">
+              <span>Samsung</span>
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" value="Sony">
+              <span>Sony</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Prix -->
+        <div class="filter-block">
+          <h3 class="filter-title">Prix maximum</h3>
+          <input type="range" id="price-range" min="0" max="1000000" step="10000" value="1000000">
+          <div class="price-range-value">
+            Jusqu'à <span id="price-value">1 000 000</span> BIF
+          </div>
+        </div>
+
+        <!-- Disponibilité -->
+        <div class="filter-block">
+          <label class="filter-checkbox">
+            <input type="checkbox" id="stock-filter">
+            <span>En stock uniquement</span>
+          </label>
+        </div>
+
+        <!-- Bouton réinitialiser -->
+        <button class="btn btn-secondary btn-full" id="reset-filters">Réinitialiser les filtres</button>
+
+      </aside>
+      <!-- ========== FIN SIDEBAR ========== -->
+
+      <!-- ========== ZONE PRODUITS ========== -->
+      <div class="catalogue-main">
+
+        <!-- Barre de résultats + tri -->
+        <div class="catalogue-toolbar">
+          <p class="results-count"><span id="results-count">12</span> produits trouvés</p>
+          <select id="sort-select" class="sort-select">
+            <option value="default">Trier par</option>
+            <option value="price-asc">Prix croissant</option>
+            <option value="price-desc">Prix décroissant</option>
+            <option value="name-asc">Nom (A-Z)</option>
+            <option value="rating-desc">Meilleures notes</option>
+          </select>
+        </div>
+
+        <!-- Grille de produits (remplie dynamiquement par JS) -->
+        <div class="products-grid" id="products-grid">
+          <!-- Les cartes produits sont générées ici par filters.js -->
+        </div>
+
+        <!-- Message si aucun résultat -->
+        <div class="no-results" id="no-results" style="display: none;">
+          <p>Aucun produit ne correspond à votre recherche.</p>
+        </div>
+
+      </div>
+      <!-- ========== FIN ZONE PRODUITS ========== -->
+
+    </div>
+  </section>
+  <!-- ==================== FIN CATALOGUE ==================== -->
+
+  <!-- ==================== FOOTER ==================== -->
+  <!-- (identique à index.html) -->
+  <footer class="footer">
+    <div class="container footer-container">
+      <div class="footer-col footer-brand">
+        <div class="logo footer-logo">
+          <a href="index.html">Pixel<span class="logo-accent">Store</span></a>
+        </div>
+        <p class="footer-description">
+          Votre destination pour du matériel informatique de qualité, 
+          sélectionné avec soin, au meilleur prix.
+        </p>
+      </div>
+      <div class="footer-col">
+        <h4>Navigation</h4>
+        <ul class="footer-links">
+          <li><a href="index.html">Accueil</a></li>
+          <li><a href="catalogue.html">Catalogue</a></li>
+          <li><a href="index.html#contact">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Catégories</h4>
+        <ul class="footer-links">
+          <li><a href="catalogue.html">Ordinateurs</a></li>
+          <li><a href="catalogue.html">Claviers</a></li>
+          <li><a href="catalogue.html">Souris</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container footer-bottom-container">
+        <p>&copy; 2026 PixelStore. Tous droits réservés.</p>
+      </div>
+    </div>
+  </footer>
+  <!-- ==================== FIN FOOTER ==================== -->
+
+  <!-- ==================== SCRIPTS ==================== -->
+  <script src="js/products.js"></script>
+  <script src="js/filters.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
