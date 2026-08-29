@@ -27,23 +27,27 @@ function updateCartBadge() {
 }
 
 // Ajoute un produit au panier (ou augmente sa quantité s'il y est déjà)
-function addToCart(productId) {
-  // Trouve le produit complet dans products.js grâce à son id
-  const product = products.find(p => p.id === parseInt(productId));
+function addToCart(productId, quantity = 1) {
+  // Trouve le produit complet grâce à son id (catalogue ou produits PixelStore)
+  let product = (typeof products !== 'undefined' ? products : [])
+    .find(p => p.id === parseInt(productId));
+  if (!product && typeof pixelProducts !== 'undefined') {
+    product = pixelProducts.find(p => p.id === parseInt(productId));
+  }
   if (!product) return;
 
   const cart = getCart();
   const existingItem = cart.find(item => item.id === product.id);
 
   if (existingItem) {
-    existingItem.quantity += 1;
+    existingItem.quantity += quantity;
   } else {
     cart.push({
       id: product.id,
       name: product.name,
       price: product.price,
       image: product.image,
-      quantity: 1
+      quantity: quantity
     });
   }
 
@@ -75,9 +79,11 @@ function showCartConfirmation(productName) {
 // la grille, et on vérifie si l'élément cliqué est un bouton "ajouter au panier".
 
 document.addEventListener('click', (e) => {
-  if (e.target.classList.contains('btn-add-cart') && !e.target.disabled) {
-    const productId = e.target.getAttribute('data-id');
-    addToCart(productId);
+  const btn = e.target.closest('.btn-add-cart');
+  if (btn && !btn.disabled) {
+    const productId = btn.getAttribute('data-id');
+    const qty = parseInt(btn.getAttribute('data-qty') || '1', 10) || 1;
+    addToCart(productId, qty);
   }
 });
 

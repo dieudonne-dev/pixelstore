@@ -5,14 +5,14 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>PixelStore - Matériel Informatique</title>
         <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="css/variables.css">
         <link rel="stylesheet" href="css/style.css">
     </head>
     <body>
 
-            <!-- ==================== HEADER ==================== -->
-        <header class="header">
+        <!-- ==================== NAVBAR (sur le hero) ==================== -->
+        <header class="header hero-nav" id="heroNav">
             <div class="container header-container">
 
                 <!-- Logo -->
@@ -25,7 +25,7 @@
                     <ul class="nav-list">
                         <li><a href="index.html" class="nav-link active">Accueil</a></li>
                         <li><a href="catalogue.html" class="nav-link">Catalogue</a></li>
-                        <li><a href="index.html#apropos">À propos</a></li>
+                        <li><a href="#categories" class="nav-link">Catégories</a></li>
                         <li><a href="#contact" class="nav-link">Contact</a></li>
                     </ul>
                 </nav>
@@ -50,13 +50,6 @@
                             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                         </svg>
                     </button>
-
-                    <!-- Icône Wishlist -->
-                    <a href="#" class="icon-btn" aria-label="Liste de souhaits">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                    </svg>
-                    </a>
 
                     <!-- Icône Panier avec badge compteur -->
                     <a href="panier.html" class="icon-btn cart-btn" aria-label="Panier">
@@ -84,7 +77,7 @@
                         <li><a href="index.html" class="nav-link active">Accueil</a></li>
                         <li><a href="catalogue.html" class="nav-link">Catalogue</a></li>
                         <li><a href="index.html#categories" class="nav-link">Catégories</a></li>
-                        <li><a href="index.html#apropos" class="nav-link">À propos</a></li>
+                        <li><a href="#categories" class="nav-link">Catégories</a></li>
                         <li><a href="index.html#contact" class="nav-link">Contact</a></li>
                     </ul>
                 </div>
@@ -93,227 +86,423 @@
         </header>
 
 
-        <!-- ==================== HERO SECTION ==================== -->
-        
+        <!-- ==================== HERO (plein écran, prend toute la place) ==================== -->
+        <section class="hero" id="hero">
 
-        <section class="hero">
-            
-            <!-- Image de fond -->
-            <div class="hero-bg">
-                <img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=1600&q=80" alt="Setup informatique moderne">
-                <div class="hero-overlay"></div>
+            <!-- Images produits 4K en diaporama -->
+            <div id="heroSlides" class="hero-slides">
+                <img class="hero-slide active" src="img/products/1496181133206-80ce9b88a853.jpg" alt="Ordinateur portable PixelStore">
+                <img class="hero-slide" src="img/products/1587829741301-dc798b83add3.jpg" alt="Clavier mécanique PixelStore">
+                <img class="hero-slide" src="img/products/1527864550417-7fd91fc51a46.jpg" alt="Souris sans fil PixelStore">
+                <img class="hero-slide" src="img/products/1505740420928-5e560c06d30e.jpg" alt="Casque audio PixelStore">
             </div>
 
-            <!-- Contenu centré par-dessus l'image -->
-            <div class="container hero-container">
-                <div class="hero-content">
-                    <span class="hero-badge">Livraison rapide disponible</span>
-                    <h1 class="hero-title">Votre matériel informatique, <span class="text-accent">au meilleur prix</span></h1>
-    
-                    <p class="hero-description">Qualité garantie. Prix transparents.</p>
-                    
-                    <div class="hero-actions">
-                        <a href="catalogue.html" class="btn btn-primary">Voir le catalogue</a>
-                        <a href="#categories" class="btn btn-secondary">Explorer</a>
-                    </div>
+            <!-- Voile pour la lisibilité -->
+            <div class="hero-overlay"></div>
+
+            <!-- Texte explicatif de l'entreprise (un par image) -->
+            <div class="hero-slide-text active" data-slide="0">
+                <span class="hero-badge">Bienvenue chez PixelStore</span>
+                <h1 class="hero-title">Votre matériel informatique, <span class="text-accent">au meilleur prix</span></h1>
+                <p class="hero-description">Depuis notre création, nous sélectionnons chaque produit avec rigueur pour garantir qualité, durabilité et prix justes à nos clients.</p>
+                <div class="hero-actions">
+                    <a href="catalogue.html" class="btn btn-primary">Voir le catalogue</a>
+                    <a href="#categories" class="btn btn-secondary">Explorer</a>
                 </div>
             </div>
-            <label for="femme">famme</label>
-            <input type="radio">
-        <label for="homme">name</label>
+
+            <div class="hero-slide-text" data-slide="1">
+                <span class="hero-badge">Nos claviers</span>
+                <h2 class="hero-title">Le confort de <span class="text-accent">frappe</span> au quotidien</h2>
+                <p class="hero-description">Sélectionnés parmi les meilleures marques, nos claviers marient précision, robustesse et design pour les professionnels comme pour les gamers.</p>
+                <div class="hero-actions">
+                    <a href="catalogue.html" class="btn btn-primary">Découvrir</a>
+                    <a href="#categories" class="btn btn-secondary">Voir nos produits</a>
+                </div>
+            </div>
+
+            <div class="hero-slide-text" data-slide="2">
+                <span class="hero-badge">Nos périphériques</span>
+                <h2 class="hero-title">La précision <span class="text-accent">à portée de main</span></h2>
+                <p class="hero-description">Des souris ergonomiques et réactives, testées et garanties, pour accompagner vos projets les plus exigeants.</p>
+                <div class="hero-actions">
+                    <a href="catalogue.html" class="btn btn-primary">Voir le catalogue</a>
+                    <a href="#categories" class="btn btn-secondary">Explorer</a>
+                </div>
+            </div>
+
+            <div class="hero-slide-text" data-slide="3">
+                <span class="hero-badge">Son &amp; immersion</span>
+                <h2 class="hero-title">Un <span class="text-accent">son</span> qui vous transporte</h2>
+                <p class="hero-description">Casques et enceintes choisis avec soin pour une expérience audio riche, que ce soit pour le travail, la musique ou le jeu.</p>
+                <div class="hero-actions">
+                    <a href="catalogue.html" class="btn btn-primary">Découvrir</a>
+                    <a href="#contact" class="btn btn-secondary">Contact</a>
+                </div>
+            </div>
+
+            <!-- Points de navigation du diaporama -->
+            <div id="heroDots" class="hero-dots"></div>
+
+            <!-- Indicateur de scroll -->
+            <a href="#categories" class="hero-scroll" aria-label="Faire défiler">
+                <span>Défiler</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </a>
+
+            <!-- Léger fondu vers la partie suivante -->
+            <div class="hero-fade" aria-hidden="true"></div>
 
         </section>
 
 
-       <!-- ==================== CATÉGORIES VEDETTES ==================== -->
+       <!-- ==================== VITRINE / CATÉGORIES ==================== -->
 
+        <section class="showcase" id="categories">
+            <!-- Halos lumineux animés en arrière-plan -->
+            <div class="showcase-glow glow-1"></div>
+            <div class="showcase-glow glow-2"></div>
+            <div class="showcase-glow glow-3"></div>
 
-        <section class="categories" id="categories">
             <div class="container">
 
-                <div class="section-header">
-                    <span class="section-tag">Nos rayons</span>
-                    <h2 class="section-title">Explorez nos catégories</h2>
-                    <p class="section-subtitle">Trouvez exactement ce dont vous avez besoin</p>
+                <div class="section-header showcase-header reveal">
+                    <span class="section-tag">Nos produits · Fait maison</span>
+                    <h2 class="section-title">Nos produits PixelStore</h2>
+                    <div class="section-rule"></div>
+                    <p class="section-subtitle">Conçus et fabriqués par notre entreprise. Cliquez sur un produit pour consulter sa fiche technique complète.</p>
                 </div>
 
-                <div class="categories-grid">
+                <div class="categories-grid" id="productGrid">
 
-                    <a href="catalogue.html" class="category-card">
+                    <button type="button" class="category-card product-card reveal" data-id="1" aria-label="Voir OrdiPro Pixel X15">
                         <div class="category-image">
-                            <img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=500&q=80" alt="Ordinateurs portables">
+                            <img src="img/products/1496181133206-80ce9b88a853.jpg" alt="OrdiPro Pixel X15">
+                            <div class="category-overlay"></div>
+                            <span class="category-tag">Nouveau</span>
                         </div>
                         <div class="category-info">
                             <div class="category-text">
-                                <h3>Ordinateurs</h3>
-                                <span>32 produits</span>
+                                <h3>OrdiPro Pixel X15</h3>
+                                <span>850 000 BIF</span>
                             </div>
                             <div class="category-arrow">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    <line x1="11" y1="8" x2="11" y2="14"></line>
+                                    <line x1="8" y1="11" x2="14" y2="11"></line>
                                 </svg>
                             </div>
                         </div>
-                    </a>
+                    </button>
 
-                    <a href="catalogue.html" class="category-card">
+                    <button type="button" class="category-card product-card reveal" data-id="2" aria-label="Voir Clavier MécaK Pixel K68">
                         <div class="category-image">
-                            <img src="https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500&q=80" alt="Claviers">
+                            <img src="img/products/1587829741301-dc798b83add3.jpg" alt="Clavier MécaK Pixel K68">
+                            <div class="category-overlay"></div>
+                            <span class="category-tag">Top vente</span>
                         </div>
                         <div class="category-info">
                             <div class="category-text">
-                                <h3>Claviers</h3>
-                                <span>18 produits</span>
+                                <h3>Clavier MécaK Pixel K68</h3>
+                                <span>65 000 BIF</span>
                             </div>
                             <div class="category-arrow">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    <line x1="11" y1="8" x2="11" y2="14"></line>
+                                    <line x1="8" y1="11" x2="14" y2="11"></line>
                                 </svg>
                             </div>
                         </div>
-                    </a>
+                    </button>
 
-                    <a href="catalogue.html" class="category-card">
+                    <button type="button" class="category-card product-card reveal" data-id="3" aria-label="Voir PixelMouse Pro">
                         <div class="category-image">
-                            <img src="https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=500&q=80" alt="Souris">
+                            <img src="img/products/1527864550417-7fd91fc51a46.jpg" alt="PixelMouse Pro">
+                            <div class="category-overlay"></div>
+                            <span class="category-tag">Nouveau</span>
                         </div>
                         <div class="category-info">
                             <div class="category-text">
-                                <h3>Souris</h3>
-                                <span>24 produits</span>    
+                                <h3>PixelMouse Pro</h3>
+                                <span>45 000 BIF</span>
                             </div>
                             <div class="category-arrow">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    <line x1="11" y1="8" x2="11" y2="14"></line>
+                                    <line x1="8" y1="11" x2="14" y2="11"></line>
                                 </svg>
                             </div>
                         </div>
-                    </a>
+                    </button>
 
-                    <a href="catalogue.html" class="category-card">
+                    <button type="button" class="category-card product-card reveal" data-id="4" aria-label="Voir Écran UltraPixel 27">
                         <div class="category-image">
-                            <img src="https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=500&q=80" alt="Écrans">
+                            <img src="img/products/1527443224154-c4a3942d3acf.jpg" alt="Écran UltraPixel 27">
+                            <div class="category-overlay"></div>
+                            <span class="category-tag">4K Ultra HD</span>
                         </div>
                         <div class="category-info">
                             <div class="category-text">
-                                <h3>Écrans</h3>
-                                <span>15 produits</span>
+                                <h3>Écran UltraPixel 27"</h3>
+                                <span>320 000 BIF</span>
                             </div>
                             <div class="category-arrow">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    <line x1="11" y1="8" x2="11" y2="14"></line>
+                                    <line x1="8" y1="11" x2="14" y2="11"></line>
                                 </svg>
                             </div>
                         </div>
-                    </a>
+                    </button>
 
-                    <a href="catalogue.html" class="category-card">
+                    <button type="button" class="category-card product-card reveal" data-id="5" aria-label="Voir Casque PixelSound H90">
                         <div class="category-image">
-                            <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80" alt="Casques">
+                            <img src="img/products/1505740420928-5e560c06d30e.jpg" alt="Casque PixelSound H90">
+                            <div class="category-overlay"></div>
+                            <span class="category-tag">Son immersif</span>
                         </div>
                         <div class="category-info">
                             <div class="category-text">
-                                <h3>Casques</h3>
-                                <span>21 produits</span>
+                                <h3>Casque PixelSound H90</h3>
+                                <span>95 000 BIF</span>
                             </div>
                             <div class="category-arrow">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    <line x1="11" y1="8" x2="11" y2="14"></line>
+                                    <line x1="8" y1="11" x2="14" y2="11"></line>
                                 </svg>
                             </div>
                         </div>
-                    </a>
+                    </button>
 
-                    <a href="catalogue.html" class="category-card">
+                    <button type="button" class="category-card product-card reveal" data-id="6" aria-label="Voir SSD PixelStore 1To NVMe">
                         <div class="category-image">
-                            <img src="https://images.unsplash.com/photo-1591370874773-6702e8f12fd8?w=500&q=80" alt="Composants">
+                            <img src="img/products/1591370874773-6702e8f12fd8.jpg" alt="SSD PixelStore 1To NVMe">
+                            <div class="category-overlay"></div>
+                            <span class="category-tag">Performance</span>
                         </div>
                         <div class="category-info">
                             <div class="category-text">
-                                <h3>Composants</h3>
-                                <span>12 produits</span>
+                                <h3>SSD PixelStore 1To NVMe</h3>
+                                <span>55 000 BIF</span>
                             </div>
                             <div class="category-arrow">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    <line x1="11" y1="8" x2="11" y2="14"></line>
+                                    <line x1="8" y1="11" x2="14" y2="11"></line>
                                 </svg>
                             </div>
                         </div>
-                    </a>
+                    </button>
 
+                    <button type="button" class="category-card product-card reveal" data-id="7" aria-label="Voir PixelBook 14">
+                        <div class="category-image">
+                            <img src="img/products/1517336714731-489689fd1ca8.jpg" alt="PixelBook 14">
+                            <div class="category-overlay"></div>
+                            <span class="category-tag">Ultra mobile</span>
+                        </div>
+                        <div class="category-info">
+                            <div class="category-text">
+                                <h3>PixelBook 14</h3>
+                                <span>720 000 BIF</span>
+                            </div>
+                            <div class="category-arrow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    <line x1="11" y1="8" x2="11" y2="14"></line>
+                                    <line x1="8" y1="11" x2="14" y2="11"></line>
+                                </svg>
+                            </div>
+                        </div>
+                    </button>
+
+                    <button type="button" class="category-card product-card reveal" data-id="8" aria-label="Voir Clavier PixelK Air 75">
+                        <div class="category-image">
+                            <img src="img/products/1618384887929-16ec33fab9ef.jpg" alt="Clavier PixelK Air 75">
+                            <div class="category-overlay"></div>
+                            <span class="category-tag">Confort</span>
+                        </div>
+                        <div class="category-info">
+                            <div class="category-text">
+                                <h3>Clavier PixelK Air 75</h3>
+                                <span>78 000 BIF</span>
+                            </div>
+                            <div class="category-arrow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    <line x1="11" y1="8" x2="11" y2="14"></line>
+                                    <line x1="8" y1="11" x2="14" y2="11"></line>
+                                </svg>
+                            </div>
+                        </div>
+                    </button>
+
+                    <button type="button" class="category-card product-card reveal" data-id="9" aria-label="Voir Souris PixelEase">
+                        <div class="category-image">
+                            <img src="img/products/1615663245857-ac93bb7c39e7.jpg" alt="Souris PixelEase">
+                            <div class="category-overlay"></div>
+                            <span class="category-tag">Confort</span>
+                        </div>
+                        <div class="category-info">
+                            <div class="category-text">
+                                <h3>Souris PixelEase</h3>
+                                <span>28 000 BIF</span>
+                            </div>
+                            <div class="category-arrow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    <line x1="11" y1="8" x2="11" y2="14"></line>
+                                    <line x1="8" y1="11" x2="14" y2="11"></line>
+                                </svg>
+                            </div>
+                        </div>
+                    </button>
+
+                    <button type="button" class="category-card product-card reveal" data-id="10" aria-label="Voir Écran VisionPixel 24">
+                        <div class="category-image">
+                            <img src="img/products/1551645120-d70bfe84c826.jpg" alt="Écran VisionPixel 24">
+                            <div class="category-overlay"></div>
+                            <span class="category-tag">Essentiel</span>
+                        </div>
+                        <div class="category-info">
+                            <div class="category-text">
+                                <h3>Écran VisionPixel 24"</h3>
+                                <span>145 000 BIF</span>
+                            </div>
+                            <div class="category-arrow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    <line x1="11" y1="8" x2="11" y2="14"></line>
+                                    <line x1="8" y1="11" x2="14" y2="11"></line>
+                                </svg>
+                            </div>
+                        </div>
+                    </button>
+
+                    <button type="button" class="category-card product-card reveal" data-id="11" aria-label="Voir Casque PixelStudio">
+                        <div class="category-image">
+                            <img src="img/products/1546435770-a3e426bf472b.jpg" alt="Casque PixelStudio">
+                            <div class="category-overlay"></div>
+                            <span class="category-tag">Créateurs</span>
+                        </div>
+                        <div class="category-info">
+                            <div class="category-text">
+                                <h3>Casque PixelStudio</h3>
+                                <span>120 000 BIF</span>
+                            </div>
+                            <div class="category-arrow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    <line x1="11" y1="8" x2="11" y2="14"></line>
+                                    <line x1="8" y1="11" x2="14" y2="11"></line>
+                                </svg>
+                            </div>
+                        </div>
+                    </button>
+
+                    <button type="button" class="category-card product-card reveal" data-id="12" aria-label="Voir PixelGPU RTX 4070">
+                        <div class="category-image">
+                            <img src="img/products/1591488320449-011701bb6704.jpg" alt="PixelGPU RTX 4070">
+                            <div class="category-overlay"></div>
+                            <span class="category-tag">Puissance</span>
+                        </div>
+                        <div class="category-info">
+                            <div class="category-text">
+                                <h3>PixelGPU RTX 4070</h3>
+                                <span>620 000 BIF</span>
+                            </div>
+                            <div class="category-arrow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    <line x1="11" y1="8" x2="11" y2="14"></line>
+                                    <line x1="8" y1="11" x2="14" y2="11"></line>
+                                </svg>
+                            </div>
+                        </div>
+                    </button>
+
+                </div>
+
+                <!-- Barre d'avantages -->
+                <div class="showcase-perks reveal">
+                    <div class="perk">
+                        <div class="perk-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                            </svg>
+                        </div>
+                        <div>
+                            <strong>Garantie 2 ans</strong>
+                            <span>Tous nos produits sont garantis</span>
+                        </div>
+                    </div>
+                    <div class="perk">
+                        <div class="perk-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="1" y="3" width="15" height="13" rx="1"></rect>
+                                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                                <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                                <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                            </svg>
+                        </div>
+                        <div>
+                            <strong>Livraison rapide</strong>
+                            <span>Partout, en 24-48h</span>
+                        </div>
+                    </div>
+                    <div class="perk">
+                        <div class="perk-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                <polyline points="9 12 11 14 15 10"></polyline>
+                            </svg>
+                        </div>
+                        <div>
+                            <strong>Paiement sécurisé</strong>
+                            <span>Transactions 100% protégées</span>
+                        </div>
+                    </div>
+                    <div class="perk">
+                        <div class="perk-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                        </div>
+                        <div>
+                            <strong>Support 7j/7</strong>
+                            <span>Une équipe à votre écoute</span>
+                        </div>
+                    </div>
                 </div>
 
             </div>
         </section>
 
         
-        <!-- ==================== À PROPOS ==================== -->
-
-
-        <section class="about" id="apropos">
-            <div class="container about-container">
-
-                <!-- Image -->
-                <div class="about-image">
-                    <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=80" alt="Équipe PixelStore">
-                    <div class="about-badge-float">
-                        <strong>5+</strong>
-                        <span>Ans d'expérience</span>
-                    </div>
-                </div>
-
-                <!-- Texte -->
-                <div class="about-content">
-                    <span class="section-tag">Notre histoire</span>
-                    <h2 class="about-title">Une équipe passionnée par la technologie</h2>
-                             
-                    <p class="about-description">
-                        Chez PixelStore, nous croyons que le bon matériel informatique ne devrait pas être un luxe. 
-                        Depuis notre création, nous sélectionnons chaque produit avec rigueur pour garantir qualité, 
-                        durabilité et prix justes à nos clients.
-                    </p>
-
-                    <!-- Points forts -->
-                    <div class="about-features">
-                        <div class="about-feature">
-                            <div class="feature-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M20 6L9 17l-5-5"></path>
-                                </svg>
-                            </div>
-                            <span>Produits testés et garantis</span>
-                        </div>
-                        <div class="about-feature">
-                            <div class="feature-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M20 6L9 17l-5-5"></path>
-                                </svg>
-                            </div>
-                            <span>Support client réactif</span>
-                        </div>
-                        <div class="about-feature">
-                            <div class="feature-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M20 6L9 17l-5-5"></path>
-                            </svg>
-                            </div>
-                            <span>Livraison rapide partout</span>
-                        </div>
-                    </div>
-
-                    <a href="#" class="btn btn-primary">En savoir plus</a>
-                </div>
-
-            </div>
-        </section>
-    
-         
         <!-- ==================== CONTACT ==================== -->
 
 
@@ -432,90 +621,147 @@
 
 
         <footer class="footer">
-            <div class="container footer-container">
+            <div class="container">
 
-            <!-- Colonne 1 : Logo + description -->
-            <div class="footer-col footer-brand">
-                <div class="logo footer-logo">
-                <a href="index.html">Pixel<span class="logo-accent">Store</span></a>
+                <!-- Bandeau newsletter moderne -->
+                <div class="footer-cta">
+                    <div class="footer-cta-text">
+                        <h3>Restez à jour sur nos nouveautés</h3>
+                        <p>Abonnez-vous pour recevoir nos offres exclusives et les dernières arrivées.</p>
+                    </div>
+                    <form class="newsletter-form footer-cta-form" id="newsletter-form">
+                        <input type="email" placeholder="Votre adresse email" required>
+                        <button type="submit">S'abonner
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </button>
+                    </form>
                 </div>
-                <p class="footer-description">
-                Votre destination pour du matériel informatique de qualité, 
-                sélectionné avec soin, au meilleur prix.
-                </p>
-                <div class="contact-socials footer-socials">
-                <a href="#" class="social-icon" aria-label="Facebook">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
-                    </svg>
-                </a>
-                <a href="#" class="social-icon" aria-label="Instagram">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                    </svg>
-                </a>
-                <a href="#" class="social-icon" aria-label="TikTok">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M16.6 5.82s.51.5 0 0A4.278 4.278 0 0 1 15.54 3h-3.09v12.4a2.592 2.592 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48z"></path>
-                    </svg>
-                </a>
+
+                <!-- Grille de colonnes -->
+                <div class="footer-container">
+
+                    <!-- Colonne 1 : Logo + description + réseaux -->
+                    <div class="footer-col footer-brand">
+                        <div class="logo footer-logo">
+                            <a href="index.html">Pixel<span class="logo-accent">Store</span></a>
+                        </div>
+                        <p class="footer-description">
+                            Votre destination pour du matériel informatique de qualité,
+                            sélectionné avec soin, au meilleur prix.
+                        </p>
+                        <div class="contact-socials footer-socials">
+                            <a href="#" class="social-icon" aria-label="Facebook">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                                </svg>
+                            </a>
+                            <a href="#" class="social-icon" aria-label="Instagram">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                                </svg>
+                            </a>
+                            <a href="#" class="social-icon" aria-label="TikTok">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M16.6 5.82s.51.5 0 0A4.278 4.278 0 0 1 15.54 3h-3.09v12.4a2.592 2.592 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48z"></path>
+                                </svg>
+                            </a>
+                            <a href="#" class="social-icon" aria-label="X">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Colonne 2 : Navigation -->
+                    <div class="footer-col">
+                        <h4>Navigation</h4>
+                        <ul class="footer-links">
+                            <li><a href="index.html">Accueil</a></li>
+                            <li><a href="catalogue.html">Catalogue</a></li>
+                            <li><a href="index.html#categories">Catégories</a></li>
+                            <li><a href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Colonne 3 : Catégories -->
+                    <div class="footer-col">
+                        <h4>Catégories</h4>
+                        <ul class="footer-links">
+                            <li><a href="catalogue.html">Ordinateurs</a></li>
+                            <li><a href="catalogue.html">Claviers</a></li>
+                            <li><a href="catalogue.html">Souris</a></li>
+                            <li><a href="catalogue.html">Écrans</a></li>
+                            <li><a href="catalogue.html">Casques</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Colonne 4 : Contact -->
+                    <div class="footer-col">
+                        <h4>Contact</h4>
+                        <ul class="footer-links footer-contact">
+                            <li><a href="mailto:contact@pixelstore.com">contact@pixelstore.com</a></li>
+                            <li><a href="tel:+25700000000">+257 00 000 000</a></li>
+                            <li>Bujumbura, Burundi</li>
+                        </ul>
+                    </div>
+
                 </div>
-            </div>
 
-            <!-- Colonne 2 : Navigation -->
-            <div class="footer-col">
-                <h4>Navigation</h4>
-                <ul class="footer-links">
-                <li><a href="index.html">Accueil</a></li>
-                <li><a href="catalogue.html">Catalogue</a></li>
-                <li><a href="index.html#apropos">À propos</a></li>
-                <li><a href="index.html#contact">Contact</a></li>
-                </ul>
-            </div>
-
-            <!-- Colonne 3 : Catégories -->
-            <div class="footer-col">
-                <h4>Catégories</h4>
-                <ul class="footer-links">
-                <li><a href="catalogue.html">Ordinateurs</a></li>
-                <li><a href="catalogue.html">Claviers</a></li>
-                <li><a href="catalogue.html">Souris</a></li>
-                <li><a href="catalogue.html">Écrans</a></li>
-                <li><a href="catalogue.html">Casques</a></li>
-                </ul>
-            </div>
-
-            <!-- Colonne 4 : Newsletter -->
-            <div class="footer-col">
-                <h4>Restez informé</h4>
-                <p class="footer-newsletter-text">Recevez nos offres et nouveautés directement par email.</p>
-                <form class="newsletter-form" id="newsletter-form">
-                <input type="email" placeholder="Votre email" required>
-                <button type="submit" aria-label="S'abonner">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                    <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                </button>
-                </form>
-            </div>
-
-            </div>
-
-            <!-- Bas de footer : copyright -->
-            <div class="footer-bottom">
-            <div class="container footer-bottom-container">
-                <p>&copy; 2026 PixelStore. Tous droits réservés.</p>
-                <div class="footer-legal">
-                <a href="#">Conditions d'utilisation</a>
-                <a href="#">Politique de confidentialité</a>
+                <!-- Bas de footer : copyright + paiements -->
+                <div class="footer-bottom">
+                    <div class="container footer-bottom-container">
+                        <p>&copy; 2026 PixelStore. Tous droits réservés.</p>
+                        <div class="footer-legal">
+                            <a href="#">Conditions d'utilisation</a>
+                            <a href="#">Politique de confidentialité</a>
+                        </div>
+                    </div>
                 </div>
-            </div>
             </div>
         </footer>
 
+        <!-- ==================== LIGHTBOX PRODUIT (image 4K plein écran) ==================== -->
+        <div class="product-lightbox" id="productLightbox" aria-hidden="true">
+            <button class="lightbox-close" id="lightboxClose" type="button" aria-label="Fermer">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+
+            <div class="lightbox-stage">
+                <!-- Image produit 4K pleine page, affichée en premier -->
+                <div class="lightbox-image-wrap" id="lightboxWrap">
+                    <img id="lightboxImage" src="" alt="Image produit">
+                    <img id="lightboxImageNext" src="" alt="" aria-hidden="true">
+                </div>
+
+                <!-- Barre d'action : infos + bouton vers la page de la fiche technique -->
+                <div class="lightbox-cta" id="lightboxCta">
+                    <div class="lightbox-cta-info">
+                        <p class="lightbox-cta-name" id="lbName"></p>
+                        <p class="lightbox-cta-price" id="lbPrice"></p>
+                    </div>
+                    <a class="lightbox-cta-btn" id="lbCtaLink" href="catalogue.html">
+                        Voir la fiche technique
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <script src="js/data.js"></script>
+        <script src="js/palette.js"></script>
+        <script src="js/cart.js"></script>
         <script src="js/main.js"></script>
 
     </body>
