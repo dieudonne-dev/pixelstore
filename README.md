@@ -6,26 +6,26 @@ Boutique en ligne de matériel informatique — catalogue produits, panier et tu
 ![CSS](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)
 
-## 📋 À propos
+##  À propos
 
 PixelStore est une plateforme e-commerce responsive dédiée à la vente de matériel informatique. Le projet propose un parcours d'achat complet, du parcours catalogue jusqu'à la validation de commande.
 
-## ✨ Fonctionnalités
+##  Fonctionnalités
 
-- 🏠 Page d'accueil avec mise en avant des produits
-- 🛍️ Catalogue produits avec filtres
-- 🛒 Gestion du panier (ajout, suppression, quantités)
-- 💳 Tunnel de commande (checkout)
-- 🌗 Thème clair / sombre
-- 📱 Design responsive (mobile, tablette, desktop)
+-  Page d'accueil avec mise en avant des produits
+-  Catalogue produits avec filtres
+-  Gestion du panier (ajout, suppression, quantités)
+-  Tunnel de commande (checkout)
+-  Thème clair / sombre
+-  Design responsive (mobile, tablette, desktop)
 
-## 🛠️ Technologies utilisées
+##  Technologies utilisées
 
 - **HTML5** — structure sémantique
 - **CSS3** — mise en forme et responsive design
 - **JavaScript** — interactivité et logique métier (panier, filtres)
 
-## 🚀 Installation et utilisation
+##  Installation et utilisation
 
 1. Clone le repository :
 ```bash
@@ -33,7 +33,7 @@ PixelStore est une plateforme e-commerce responsive dédiée à la vente de mat�
 ```
 2. Ouvre le fichier `index.html` dans ton navigateur, ou utilise une extension comme **Live Server** dans VS Code.
 
-## 📂 Structure du projet
+##  Structure du projet
 
 ```pixelstore/
 ├── assets/
