@@ -11,19 +11,18 @@
   </head>
   <body>
 
+    <script src="js/admin-config.js"></script>
+    <script src="js/admin-supabase.js"></script>
     <script src="js/layout.js"></script>
     <script src="js/admin.js"></script>
 
     <script>
-      // ===== CHARGEMENT DU LAYOUT + CONTENU DU DASHBOARD =====
       document.addEventListener('DOMContentLoaded', () => {
         const content = renderAdminLayout('index');
 
-        // Statistiques calculées depuis la base de démo
-        const activeOrders = adminOrders.filter(o => o.status !== 'cancelled' && o.status !== 'refunded');
-        const revenue = activeOrders.reduce((s, o) => s + o.total, 0);
-        const totalQty = adminProducts.reduce((s, p) => s + p.stock, 0);
-        const lowStock = adminProducts.filter(p => p.stock <= 10);
+        let stats = {};
+        let orders = [];
+        let products = [];
 
         content.innerHTML = `
           <div class="page-breadcrumb">
@@ -34,7 +33,7 @@
 
           <div class="page-header">
             <div>
-              <h1 class="page-title">Bonjour, Pixel Admin 👋</h1>
+              <h1 class="page-title">Bonjour, Admin 👋</h1>
               <p class="page-subtitle">Voici un aperçu de votre boutique en date du <strong>${new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</strong>.</p>
             </div>
             <a href="produits.html" class="btn btn-primary">+ Nouveau produit</a>
@@ -44,68 +43,49 @@
             <div class="stat-card">
               <div class="stat-icon green">${ICONS.store}</div>
               <div>
-                <div class="stat-value">${formatPrice(revenue)}</div>
+                <div class="stat-value" id="statRevenue">—</div>
                 <div class="stat-label">Chiffre d'affaires</div>
-                <span class="stat-trend up">▲ +12,4% vs mois dernier</span>
               </div>
             </div>
             <div class="stat-card">
               <div class="stat-icon blue">${ICONS.orders}</div>
               <div>
-                <div class="stat-value">${adminOrders.length}</div>
+                <div class="stat-value" id="statOrders">—</div>
                 <div class="stat-label">Commandes</div>
-                <span class="stat-trend up">▲ +8,1% ce mois</span>
               </div>
             </div>
             <div class="stat-card">
               <div class="stat-icon orange">${ICONS.products}</div>
               <div>
-                <div class="stat-value">${adminProducts.length}</div>
+                <div class="stat-value" id="statProducts">—</div>
                 <div class="stat-label">Produits actifs</div>
-                <span class="stat-trend">${totalQty} unités en stock</span>
               </div>
             </div>
             <div class="stat-card">
               <div class="stat-icon red">${ICONS.customers}</div>
               <div>
-                <div class="stat-value">${adminCustomers.length}</div>
+                <div class="stat-value" id="statCustomers">—</div>
                 <div class="stat-label">Clients</div>
-                <span class="stat-trend up">▲ +5 nouveaux</span>
               </div>
             </div>
           </div>
 
           <div class="dashboard-grid">
-            <!-- Graphique : revenus des 7 derniers jours -->
             <div class="card">
               <div class="card-header">
                 <div>
-                  <h3 class="card-title">Ventes des 7 derniers jours</h3>
-                  <p class="card-subtitle">Montant des commandes par jour (BIF)</p>
+                  <h3 class="card-title">Statuts des commandes</h3>
+                  <p class="card-subtitle">Répartition par statut</p>
                 </div>
-                <span class="badge badge-green">+18,2%</span>
-              </div>
-              <div class="dashboard-chart">
-                <div class="chart-bars" id="salesChart"></div>
-              </div>
-            </div>
-
-            <!-- Statut des commandes -->
-            <div class="card">
-              <div class="card-header">
-                <h3 class="card-title">Commandes par statut</h3>
               </div>
               <div class="status-list" id="orderStatusList"></div>
             </div>
-          </div>
 
-          <div class="dashboard-grid">
-            <!-- Dernières commandes -->
             <div class="card">
               <div class="card-header">
                 <div>
                   <h3 class="card-title">Dernières commandes</h3>
-                  <p class="card-subtitle">Les 6 commandes les plus récentes</p>
+                  <p class="card-subtitle">Les plus récentes</p>
                 </div>
                 <a href="commandes.html" class="btn btn-secondary btn-sm">Voir tout</a>
               </div>
@@ -120,102 +100,90 @@
                       <th>Statut</th>
                     </tr>
                   </thead>
-                  <tbody></tbody>
+                  <tbody id="recentOrders"></tbody>
                 </table>
               </div>
             </div>
-
-            <!-- Activité récente -->
-            <div class="card">
-              <div class="card-header">
-                <h3 class="card-title">Activité récente</h3>
-              </div>
-              <div id="activityList"></div>
-              <a href="#" class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px">Voir tout l'historique</a>
-            </div>
           </div>
 
-          <div class="alert alert-warning">
+          <div class="alert alert-warning" id="lowStockAlert" style="display:none">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
             <div>
               <strong>Stock faible</strong>
-              ${lowStock.length} produit(s) atteignent le seuil de stock bas. <a href="stock.html" style="color:inherit;text-decoration:underline;font-weight:600">Gérer le stock →</a>
+              <span id="lowStockText"></span> <a href="stock.html" style="color:inherit;text-decoration:underline;font-weight:600">Gérer le stock →</a>
             </div>
           </div>
         `;
 
-        // Remplit le graphique de ventes (7 derniers jours)
-        const days = [
-          '23 août', '24 août', '25 août', '26 août', '27 août', '28 août', '29 août'
-        ];
-        const dailySales = [380000, 640000, 510000, 820000, 455000, 950000, 1035000];
-        const max = Math.max(...dailySales);
-        document.getElementById('salesChart').innerHTML = days.map((d, i) => `
-          <div class="chart-bar">
-            <span class="bar-value">${Math.round(dailySales[i] / 1000)}k</span>
-            <div class="bar" style="height:${Math.round((dailySales[i] / max) * 100)}%"></div>
-            <span class="bar-label">${d}</span>
-          </div>
-        `).join('');
+        function methodLabel(m) {
+          const map = { card: 'Carte bancaire', paypal: 'PayPal', cod: 'Paiement à la livraison', bank_transfer: 'Virement', mobile_money: 'Mobile Money' };
+          return map[m] || (m ? String(m).replace('_', ' ') : '—');
+        }
 
-        // Répartition par statut
-        const statusCounts = {};
-        activeOrders.forEach(o => { statusCounts[o.status] = (statusCounts[o.status] || 0) + 1; });
-        const statusTotal = activeOrders.length;
-        const statusOrder = ['pending', 'processing', 'shipped', 'delivered'];
-        document.getElementById('orderStatusList').innerHTML = statusOrder
-          .filter(s => statusCounts[s])
-          .map(s => `
-            <div class="status-item">
-              <span class="status-dot ${orderStatusMap[s].badge.replace('badge-', 'dot-')}"></span>
-              <div style="flex:1">
-                <div style="display:flex;justify-content:space-between">
-                  <span style="font-size:0.9rem">${orderStatusMap[s].label}</span>
-                  <strong style="font-size:0.9rem">${statusCounts[s]}</strong>
+        function render() {
+          document.getElementById('statRevenue').textContent = formatPrice(stats.revenue || 0);
+          document.getElementById('statOrders').textContent = stats.orders || 0;
+          document.getElementById('statProducts').textContent = stats.products || 0;
+          document.getElementById('statCustomers').textContent = stats.customers || 0;
+
+          // Répartition par statut
+          const count = {};
+          orders.forEach(o => { count[o.status] = (count[o.status] || 0) + 1; });
+          const total = orders.length;
+          const order = ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'];
+          document.getElementById('orderStatusList').innerHTML = order
+            .filter(s => count[s])
+            .map(s => {
+              const m = orderStatusMap[s] || orderStatusMap.pending;
+              return `
+                <div class="status-item">
+                  <span class="status-dot ${m.badge.replace('badge-', 'dot-')}"></span>
+                  <div style="flex:1">
+                    <div style="display:flex;justify-content:space-between">
+                      <span style="font-size:0.9rem">${m.label}</span>
+                      <strong style="font-size:0.9rem">${count[s]}</strong>
+                    </div>
+                    <div style="height:6px;background:var(--bg-primary);border-radius:999px;margin-top:8px">
+                      <div style="height:100%;border-radius:999px;background:var(--accent-green);width:${total ? Math.round((count[s] / total) * 100) : 0}%"></div>
+                    </div>
+                  </div>
                 </div>
-                <div style="height:6px;background:var(--bg-primary);border-radius:999px;margin-top:8px">
-                  <div style="height:100%;border-radius:999px;background:var(--accent-green);width:${Math.round((statusCounts[s]/statusTotal)*100)}%"></div>
-                </div>
-              </div>
-            </div>
-          `).join('');
+              `;
+            }).join('') || '<div class="empty-state"><p>Aucune commande.</p></div>';
 
-        // Dernières commandes
-        const tbody = content.querySelector('.admin-table tbody');
-        tbody.innerHTML = [...adminOrders]
-          .sort((a, b) => new Date(b.date) - new Date(a.date))
-          .slice(0, 6)
-          .map(o => {
-            const c = findCustomer(o.customerId);
-            const st = orderStatusMap[o.status];
-            return `
-              <tr>
-                <td><a href="commandes.html" class="price-text" style="color:var(--accent-green)">${o.number}</a></td>
-                <td><strong style="font-size:0.88rem">${c ? c.name : '—'}</strong></td>
-                <td style="color:var(--text-secondary)">${formatDate(o.date)}</td>
-                <td class="price-text">${formatPrice(o.total)}</td>
-                <td><span class="badge ${st.badge}">${st.label}</span></td>
-              </tr>
-            `;
-          }).join('');
+          // Dernières commandes
+          const tbody = document.getElementById('recentOrders');
+          tbody.innerHTML = [...orders]
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .slice(0, 6)
+            .map(o => {
+              const st = orderStatusMap[o.status] || orderStatusMap.pending;
+              const email = (o.user && o.user.email) || '—';
+              return `
+                <tr>
+                  <td><a href="commandes.html" class="price-text" style="color:var(--accent-green)">${o.order_number}</a></td>
+                  <td><strong style="font-size:0.88rem">${email}</strong></td>
+                  <td style="color:var(--text-secondary)">${formatDate(o.created_at)}</td>
+                  <td class="price-text">${formatPrice(o.grand_total)}</td>
+                  <td><span class="badge ${st.badge}">${st.label}</span></td>
+                </tr>
+              `;
+            }).join('') || '<tr><td colspan="5"><div class="empty-state"><p>Aucune commande.</p></div></td></tr>';
 
-        // Activité récente
-        const activities = [
-          { icon: ICONS.orders, text: 'Nouvelle commande <strong>PS-20260829-001</strong>', time: 'il y a 15 min' },
-          { icon: ICONS.products, text: 'Produit <strong>PixelGPU RTX 4070</strong> mis à jour', time: 'il y a 1 h' },
-          { icon: ICONS.customers, text: 'Nouveau client <strong>Chantal Irankunda</strong>', time: 'il y a 3 h' },
-          { icon: ICONS.stock, text: 'Stock du <strong>Clavier MécaK</strong> actualisé', time: 'il y a 5 h' },
-          { icon: ICONS.coupons, text: 'Code promo <strong>VIPPIXEL</strong> créé', time: 'hier' }
-        ];
-        document.getElementById('activityList').innerHTML = activities.map(a => `
-          <div class="activity-item">
-            <div class="activity-icon">${a.icon}</div>
-            <div class="activity-body">
-              <p>${a.text}</p>
-              <span>${a.time}</span>
-            </div>
-          </div>
-        `).join('');
+          if (stats.lowStock > 0) {
+            document.getElementById('lowStockAlert').style.display = 'flex';
+            document.getElementById('lowStockText').textContent = `${stats.lowStock} produit(s) atteignent le seuil de stock bas.`;
+          }
+        }
+
+        async function load() {
+          stats = await adminDB.dashboardStats();
+          orders = await adminDB.orders();
+          products = await adminDB.products();
+          render();
+        }
+
+        adminGate(content, load);
       });
     </script>
 

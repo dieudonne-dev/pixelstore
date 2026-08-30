@@ -11,6 +11,8 @@
   </head>
   <body>
 
+    <script src="js/admin-config.js"></script>
+    <script src="js/admin-supabase.js"></script>
     <script src="js/layout.js"></script>
     <script src="js/admin.js"></script>
 
@@ -18,11 +20,12 @@
       document.addEventListener('DOMContentLoaded', () => {
         const content = renderAdminLayout('produits');
 
-        // ---- Détermine si on vient du dashboard / recherche globale ----
         const params = new URLSearchParams(window.location.search);
         let currentSearch = params.get('q') || '';
         let currentCategory = 'all';
         let currentStatus = 'all';
+        let allProducts = [];
+        let allCategories = [];
 
         content.innerHTML = `
           <div class="page-breadcrumb">
@@ -34,13 +37,13 @@
           <div class="page-header">
             <div>
               <h1 class="page-title">Produits</h1>
-              <p class="page-subtitle">Gérez votre catalogue de ${adminProducts.length} produits.</p>
+              <p class="page-subtitle" id="productsCount">Chargement…</p>
             </div>
             <a href="produit-form.html" class="btn btn-primary">+ Ajouter un produit</a>
           </div>
 
           <div class="kpi-chips">
-            <button class="kpi-chip active" data-filter="all">Tous <span class="chip-count">${adminProducts.length}</span></button>
+            <button class="kpi-chip active" data-filter="all">Tous <span class="chip-count" id="chipAll"></span></button>
             <button class="kpi-chip" data-filter="active">Actifs</button>
             <button class="kpi-chip" data-filter="inactive">Inactifs</button>
             <button class="kpi-chip" data-filter="lowstock">Stock faible</button>
@@ -54,7 +57,6 @@
             </div>
             <select class="select-filter" id="categoryFilter">
               <option value="all">Toutes les catégories</option>
-              ${adminCategories.map(c => `<option value="${c.slug}">${c.name}</option>`).join('')}
             </select>
           </div>
 
@@ -74,18 +76,14 @@
               <tbody id="productsBody"></tbody>
             </table>
           </div>
-
-          <div class="pagination" id="pagination"></div>
         `;
 
-        // Références
         const tbody = document.getElementById('productsBody');
         const searchInput = document.getElementById('searchInput');
         const categoryFilter = document.getElementById('categoryFilter');
 
-        // ---- Fonction de rendu ----
         function renderProducts() {
-          let list = adminProducts;
+          let list = allProducts;
 
           if (currentSearch) {
             const q = currentSearch.toLowerCase();
@@ -113,27 +111,26 @@
                 </td>
               </tr>
             `;
-            document.getElementById('pagination').innerHTML = '';
             return;
           }
 
           tbody.innerHTML = list.map(p => {
-            const cat = adminCategories.find(c => c.slug === p.category);
+            const cat = allCategories.find(c => c.slug === p.category);
             return `
               <tr>
                 <td>
                   <div class="table-product">
-                    <img src="${p.image}" alt="${p.name}">
+                    <img src="${p.image || ''}" alt="${p.name}">
                     <div>
                       <strong>${p.name}</strong>
                       <span>${p.reference}</span>
                     </div>
                   </div>
                 </td>
-                <td>${cat ? cat.name : p.category}</td>
+                <td>${cat ? cat.name : p.categoryName || p.category}</td>
                 <td class="price-text">${formatPrice(p.price)}</td>
                 <td>
-                  <span class="badge ${p.stock <= 5 ? 'badge-red' : p.stock <= 10 ? 'badge-amber' : 'badge-green'}">${p.stock} ${p.stock <= 1 ? 'u.' : 'u.'}</span>
+                  <span class="badge ${p.stock <= 5 ? 'badge-red' : p.stock <= 10 ? 'badge-amber' : 'badge-green'}">${p.stock} u.</span>
                 </td>
                 <td>★ ${p.rating}</td>
                 <td>
@@ -156,16 +153,18 @@
           }).join('');
         }
 
-        // ---- Événements ----
-        searchInput.addEventListener('input', (e) => {
-          currentSearch = e.target.value;
+        async function load() {
+          allCategories = await adminDB.categories();
+          allProducts = await adminDB.products();
+          document.getElementById('productsCount').textContent = `Gérez votre catalogue de ${allProducts.length} produits.`;
+          document.getElementById('chipAll').textContent = allProducts.length;
+          categoryFilter.innerHTML = '<option value="all">Toutes les catégories</option>' +
+            allCategories.map(c => `<option value="${c.slug}">${c.name}</option>`).join('');
           renderProducts();
-        });
+        }
 
-        categoryFilter.addEventListener('change', (e) => {
-          currentCategory = e.target.value;
-          renderProducts();
-        });
+        searchInput.addEventListener('input', (e) => { currentSearch = e.target.value; renderProducts(); });
+        categoryFilter.addEventListener('change', (e) => { currentCategory = e.target.value; renderProducts(); });
 
         content.querySelectorAll('.kpi-chip').forEach(chip => {
           chip.addEventListener('click', () => {
@@ -176,22 +175,24 @@
           });
         });
 
-        // Suppression (démo : on utilise une fenêtre de confirmation native)
-        tbody.addEventListener('click', (e) => {
+        tbody.addEventListener('click', async (e) => {
           const btn = e.target.closest('.btn-delete');
           if (!btn) return;
           const id = parseInt(btn.dataset.id, 10);
-          const prod = findProduct(id);
+          const prod = allProducts.find(p => p.id === id);
           if (prod && confirm(`Supprimer le produit « ${prod.name} » ?`)) {
-            const idx = adminProducts.findIndex(p => p.id === id);
-            if (idx > -1) adminProducts.splice(idx, 1);
-            saveAdminProducts();
-            showToast('Produit supprimé avec succès.');
-            renderProducts();
+            try {
+              await adminDB.deleteProduct(id);
+              allProducts = allProducts.filter(p => p.id !== id);
+              load();
+              showToast('Produit supprimé avec succès.');
+            } catch (err) {
+              showToast((err && err.message) || 'Erreur lors de la suppression.', 'error');
+            }
           }
         });
 
-        renderProducts();
+        adminGate(content, load);
       });
     </script>
 

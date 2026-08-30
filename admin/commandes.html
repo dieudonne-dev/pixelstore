@@ -11,6 +11,8 @@
   </head>
   <body>
 
+    <script src="js/admin-config.js"></script>
+    <script src="js/admin-supabase.js"></script>
     <script src="js/layout.js"></script>
     <script src="js/admin.js"></script>
 
@@ -19,6 +21,7 @@
         const content = renderAdminLayout('commandes');
 
         let currentFilter = 'all';
+        let orders = [];
 
         content.innerHTML = `
           <div class="page-breadcrumb">
@@ -35,7 +38,7 @@
           </div>
 
           <div class="kpi-chips">
-            <button class="kpi-chip active" data-filter="all">Toutes <span class="chip-count">${adminOrders.length}</span></button>
+            <button class="kpi-chip active" data-filter="all">Toutes <span class="chip-count" id="chipAll">0</span></button>
             <button class="kpi-chip" data-filter="pending">En attente</button>
             <button class="kpi-chip" data-filter="processing">En traitement</button>
             <button class="kpi-chip" data-filter="shipped">Expédiées</button>
@@ -74,7 +77,6 @@
             </table>
           </div>
 
-          <!-- Modal détail commande -->
           <div class="modal-backdrop" id="orderModal">
             <div class="modal">
               <div class="modal-header">
@@ -93,20 +95,23 @@
         const paymentFilter = document.getElementById('paymentFilter');
         const modal = document.getElementById('orderModal');
 
-        function renderOrders() {
-          let list = [...adminOrders].sort((a, b) => new Date(b.date) - new Date(a.date));
+        function methodLabel(m) {
+          const map = { card: 'Carte bancaire', paypal: 'PayPal', cod: 'Paiement à la livraison', bank_transfer: 'Virement', mobile_money: 'Mobile Money' };
+          return map[m] || (m ? String(m).replace('_', ' ') : '—');
+        }
 
+        function renderOrders() {
+          let list = [...orders];
           if (currentFilter !== 'all') list = list.filter(o => o.status === currentFilter);
           const q = searchInput.value.toLowerCase();
           if (q) {
             list = list.filter(o => {
-              const c = findCustomer(o.customerId);
-              return o.number.toLowerCase().includes(q) ||
-                (c && c.name.toLowerCase().includes(q));
+              const email = (o.user && o.user.email) || '';
+              return o.order_number.toLowerCase().includes(q) || email.toLowerCase().includes(q);
             });
           }
           const pay = paymentFilter.value;
-          if (pay !== 'all') list = list.filter(o => o.payment === pay);
+          if (pay !== 'all') list = list.filter(o => o.payment_status === pay);
 
           if (list.length === 0) {
             tbody.innerHTML = `
@@ -121,17 +126,17 @@
           }
 
           tbody.innerHTML = list.map(o => {
-            const c = findCustomer(o.customerId);
-            const st = orderStatusMap[o.status];
-            const pay = paymentStatusMap[o.payment];
-            const nArticles = o.items.reduce((s, i) => s + i.qty, 0);
+            const st = orderStatusMap[o.status] || orderStatusMap.pending;
+            const pay = paymentStatusMap[o.payment_status] || paymentStatusMap.pending;
+            const email = (o.user && o.user.email) || '—';
+            const nArticles = (o.items || []).reduce((s, i) => s + i.quantity, 0);
             return `
               <tr>
-                <td class="price-text" style="color:var(--accent-green)">${o.number}</td>
-                <td><strong style="font-size:0.88rem">${c ? c.name : '—'}</strong><br><span style="font-size:0.76rem;color:var(--text-secondary)">${c ? c.email : ''}</span></td>
-                <td style="color:var(--text-secondary)">${formatDate(o.date)}</td>
+                <td class="price-text" style="color:var(--accent-green)">${o.order_number}</td>
+                <td><strong style="font-size:0.88rem">${email}</strong><br><span style="font-size:0.76rem;color:var(--text-secondary)">${email}</span></td>
+                <td style="color:var(--text-secondary)">${formatDate(o.created_at)}</td>
                 <td>${nArticles} article(s)</td>
-                <td class="price-text">${formatPrice(o.total)}</td>
+                <td class="price-text">${formatPrice(o.grand_total)}</td>
                 <td><span class="badge ${pay.badge}">${pay.label}</span></td>
                 <td><span class="badge ${st.badge}">${st.label}</span></td>
                 <td><button class="btn btn-secondary btn-sm btn-view" data-id="${o.id}">Détails</button></td>
@@ -141,16 +146,16 @@
         }
 
         function openOrderModal(order) {
-          const c = findCustomer(order.customerId);
-          const st = orderStatusMap[order.status];
-          const pay = paymentStatusMap[order.payment];
+          const st = orderStatusMap[order.status] || orderStatusMap.pending;
+          const pay = paymentStatusMap[order.payment_status] || paymentStatusMap.pending;
+          const email = (order.user && order.user.email) || 'Client';
 
           const statusOptions = Object.keys(orderStatusMap)
             .filter(s => s !== 'confirmed')
             .map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${orderStatusMap[s].label}</option>`)
             .join('');
 
-          document.getElementById('modalTitle').textContent = 'Détail — ' + order.number;
+          document.getElementById('modalTitle').textContent = 'Détail — ' + order.order_number;
           document.getElementById('modalBody').innerHTML = `
             <div class="detail-panel">
               <div class="card" style="margin-bottom:16px">
@@ -170,18 +175,18 @@
                 <div class="card-header"><h4>Informations client</h4></div>
                 <div style="display:flex;gap:14px;align-items:center">
                   <div class="aside-row" style="border:none;padding:0">
-                    <div class="customer-avatar">${c ? initials(c.name) : '?'}</div>
+                    <div class="customer-avatar">${initials(email)}</div>
                     <div>
-                      <p><strong>${c ? c.name : 'Client'}</strong></p>
-                      <span>${c ? c.email : '—'}${c && c.phone ? ' • ' + c.phone : ''}</span>
+                      <p><strong>${email}</strong></p>
+                      <span>${email}</span>
                     </div>
                   </div>
                 </div>
                 <div class="detail-section">
                   <div style="display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between">
                     <div><strong style="font-size:0.8rem;color:var(--text-secondary)">Paiement</strong><br><span class="badge ${pay.badge}">${pay.label}</span></div>
-                    <div><strong style="font-size:0.8rem;color:var(--text-secondary)">Méthode</strong><br><span style="text-transform:capitalize">${order.method.replace('_', ' ')}</span></div>
-                    <div><strong style="font-size:0.8rem;color:var(--text-secondary)">Date</strong><br><span>${formatDateTime(order.date)}</span></div>
+                    <div><strong style="font-size:0.8rem;color:var(--text-secondary)">Méthode</strong><br><span>${methodLabel(order.payment_method)}</span></div>
+                    <div><strong style="font-size:0.8rem;color:var(--text-secondary)">Date</strong><br><span>${formatDateTime(order.created_at)}</span></div>
                   </div>
                 </div>
               </div>
@@ -192,12 +197,12 @@
                   <table class="admin-table">
                     <thead><tr><th>Produit</th><th>Qté</th><th>Prix</th><th style="text-align:right">Sous-total</th></tr></thead>
                     <tbody>
-                      ${order.items.map(i => `
+                      ${(order.items || []).map(i => `
                         <tr>
-                          <td>${i.name}</td>
-                          <td>${i.qty}</td>
-                          <td>${formatPrice(i.price)}</td>
-                          <td style="text-align:right" class="price-text">${formatPrice(i.price * i.qty)}</td>
+                          <td>${i.product_name}</td>
+                          <td>${i.quantity}</td>
+                          <td>${formatPrice(i.unit_price)}</td>
+                          <td style="text-align:right" class="price-text">${formatPrice(i.unit_price * i.quantity)}</td>
                         </tr>
                       `).join('')}
                     </tbody>
@@ -205,8 +210,9 @@
                 </div>
                 <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px;margin-left:auto;max-width:280px">
                   <div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">Sous-total</span><span>${formatPrice(order.subtotal)}</span></div>
-                  <div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">Livraison</span><span>${formatPrice(order.shipping)}</span></div>
-                  <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border-color);padding-top:8px"><strong>Total</strong><strong class="price-text">${formatPrice(order.total)}</strong></div>
+                  <div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">Remise</span><span>${formatPrice(order.discount_total || 0)}</span></div>
+                  <div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">Livraison</span><span>${formatPrice(order.shipping_cost || 0)}</span></div>
+                  <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border-color);padding-top:8px"><strong>Total</strong><strong class="price-text">${formatPrice(order.grand_total)}</strong></div>
                 </div>
               </div>
             </div>
@@ -214,22 +220,27 @@
 
           modal.classList.add('open');
 
-          document.getElementById('updateStatusBtn').addEventListener('click', () => {
+          document.getElementById('updateStatusBtn').addEventListener('click', async () => {
             const newStatus = document.getElementById('orderStatusSelect').value;
-            order.status = newStatus;
-            showToast('Statut de la commande mis à jour.');
-            modal.classList.remove('open');
-            renderOrders();
-            const p = document.getElementById('orderStatusSelect');
-            if (p) p.remove();
+            const btn = document.getElementById('updateStatusBtn');
+            btn.disabled = true;
+            try {
+              await adminDB.updateOrderStatus(order.id, newStatus);
+              order.status = newStatus;
+              showToast('Statut de la commande mis à jour.');
+              modal.classList.remove('open');
+              renderOrders();
+            } catch (err) {
+              btn.disabled = false;
+              showToast((err && err.message) || 'Recherchez le schéma supabase_schema.sql dans Supabase, puis réessayez.', 'error');
+            }
           });
         }
 
-        // Événements
         tbody.addEventListener('click', (e) => {
           const btn = e.target.closest('.btn-view');
           if (!btn) return;
-          const order = adminOrders.find(o => o.id === parseInt(btn.dataset.id, 10));
+          const order = orders.find(o => o.id === btn.dataset.id);
           if (order) openOrderModal(order);
         });
 
@@ -249,7 +260,13 @@
         modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape') modal.classList.remove('open'); });
 
-        renderOrders();
+        async function load() {
+          orders = await adminDB.orders();
+          document.getElementById('chipAll').textContent = orders.length;
+          renderOrders();
+        }
+
+        adminGate(content, load);
       });
     </script>
 

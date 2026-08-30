@@ -45,7 +45,8 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
-  INSERT INTO public.users (id, email, first_name, last_name)
+  -- L'email administrateur fixe devient automatiquement admin.
+  INSERT INTO public.users (id, email, first_name, last_name, role)
   SELECT NEW.id, NEW.email,
          coalesce(NULLIF(NEW.raw_user_meta_data->>'first_name',''),
                   NULLIF(split_part(coalesce(NEW.raw_user_meta_data->>'full_name',''), ' ', 1), ''),
@@ -55,7 +56,8 @@ BEGIN
                        THEN substr(coalesce(NEW.raw_user_meta_data->>'full_name',''),
                                    position(' ' in coalesce(NEW.raw_user_meta_data->>'full_name','')) + 1)
                        ELSE '' END,
-                  '');
+                  ''),
+         CASE WHEN lower(NEW.email) = lower('admin@pixelstore.bi') THEN 'admin'::text ELSE 'user'::text END;
   RETURN NEW;
 END;
 $$;
@@ -71,8 +73,12 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
-  UPDATE public.users SET email = NEW.email, updated_at = now()
-  WHERE id = NEW.id;
+  UPDATE public.users
+     SET email = NEW.email,
+         role = CASE WHEN lower(NEW.email) = lower('admin@pixelstore.bi')
+                     THEN 'admin'::text ELSE role END,
+         updated_at = now()
+   WHERE id = NEW.id;
   RETURN NEW;
 END;
 $$;
@@ -528,6 +534,12 @@ DROP POLICY IF EXISTS users_self ON public.users;
 CREATE POLICY users_self ON public.users
   FOR ALL USING (id = auth.uid()) WITH CHECK (id = auth.uid());
 
+-- Les administrateurs peuvent consulter l'ensemble des utilisateurs
+-- (gestion des clients + jointures e-mail sur les commandes).
+DROP POLICY IF EXISTS users_admin ON public.users;
+CREATE POLICY users_admin ON public.users
+  FOR SELECT USING (public.is_admin());
+
 DROP POLICY IF EXISTS addresses_self ON public.addresses;
 CREATE POLICY addresses_self ON public.addresses
   FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
@@ -622,6 +634,35 @@ CREATE POLICY osh_read ON public.order_status_history FOR SELECT
 -- ce qui garantit qu'un utilisateur ne peut agir que sur SA commande.
 -- ============================================================
 GRANT EXECUTE ON FUNCTION public.create_order(text, text, uuid, uuid, text) TO anon, authenticated;
+
+-- ------------------------------------------------------------
+-- Admin : mise à jour du statut d'une commande
+-- SECURITY DEFINER (contourne l'absence volontaire de policy UPDATE
+-- sur orders) mais vérifie que l'appelant est bien administrateur.
+-- ------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.admin_update_order_status(
+  p_order_id uuid,
+  p_status   text
+) RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'Accès administrateur requis';
+  END IF;
+  IF p_status NOT IN ('pending','confirmed','processing','shipped','delivered','cancelled','refunded') THEN
+    RAISE EXCEPTION 'Statut de commande invalide';
+  END IF;
+  UPDATE public.orders
+     SET status = p_status, updated_at = now()
+   WHERE id = p_order_id;
+  INSERT INTO public.order_status_history (order_id, status, changed_by)
+  VALUES (p_order_id, p_status, auth.uid());
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.admin_update_order_status(uuid, text) TO anon, authenticated;
 
 -- ============================================================
 -- DONNÉES DE DÉMONSTRATION (alignées sur data.js + products.js)
@@ -824,3 +865,9 @@ ON CONFLICT (product_id) DO NOTHING;
 INSERT INTO public.coupons (code, discount_type, discount_value, is_active)
 VALUES ('BIENVENUE10', 'percentage', 10, true)
 ON CONFLICT (code) DO NOTHING;
+
+-- Promotion admin : remonte les comptes existants dont l'email correspond
+-- à l'email administrateur fixe. Idempotent (ne modifie que les lignes utiles).
+UPDATE public.users
+   SET role = 'admin'
+ WHERE lower(email) = lower('admin@pixelstore.bi');

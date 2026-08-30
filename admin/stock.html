@@ -11,6 +11,8 @@
   </head>
   <body>
 
+    <script src="js/admin-config.js"></script>
+    <script src="js/admin-supabase.js"></script>
     <script src="js/layout.js"></script>
     <script src="js/admin.js"></script>
 
@@ -19,8 +21,9 @@
         const content = renderAdminLayout('stock');
 
         const lowThreshold = 10;
-
         let currentFilter = 'all';
+        let products = [];
+        let categories = [];
 
         content.innerHTML = `
           <div class="page-breadcrumb">
@@ -38,7 +41,7 @@
           </div>
 
           <div class="kpi-chips" id="stockChips">
-            <button class="kpi-chip active" data-filter="all">Tous <span class="chip-count">${adminProducts.length}</span></button>
+            <button class="kpi-chip active" data-filter="all">Tous <span class="chip-count" id="chipAll"></span></button>
             <button class="kpi-chip" data-filter="low">Stock faible</button>
             <button class="kpi-chip" data-filter="out">En rupture</button>
             <button class="kpi-chip" data-filter="in">Disponible</button>
@@ -72,7 +75,6 @@
             </table>
           </div>
 
-          <!-- Modal ajustement / mouvement de stock -->
           <div class="modal-backdrop" id="stockModal">
             <div class="modal">
               <div class="modal-header">
@@ -97,7 +99,7 @@
         }
 
         function renderStock() {
-          let list = adminProducts;
+          let list = products;
           if (currentFilter === 'low') list = list.filter(p => p.stock > 0 && p.stock <= lowThreshold);
           if (currentFilter === 'out') list = list.filter(p => p.stock <= 0);
           if (currentFilter === 'in') list = list.filter(p => p.stock > lowThreshold);
@@ -114,7 +116,7 @@
             tbody.innerHTML = `
               <tr><td colspan="7">
                 <div class="empty-state">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
                   <h3>Aucun produit trouvé</h3>
                   <p>Modifiez vos filtres ou votre recherche.</p>
                 </div>
@@ -123,7 +125,7 @@
           }
 
           tbody.innerHTML = list.map(p => {
-            const cat = adminCategories.find(c => c.slug === p.category);
+            const cat = categories.find(c => c.slug === p.category);
             const lvl = stockLevel(p);
             const statusBadge = lvl === 'out'
               ? '<span class="badge badge-red">En rupture</span>'
@@ -135,14 +137,14 @@
               <tr>
                 <td>
                   <div class="table-product">
-                    <img src="${p.image}" alt="${p.name}">
+                    <img src="${p.image || ''}" alt="${p.name}">
                     <div>
                       <strong>${p.name}</strong>
                       <span>${p.brand}</span>
                     </div>
                   </div>
                 </td>
-                <td>${cat ? cat.name : p.category}</td>
+                <td>${cat ? cat.name : p.categoryName || p.category}</td>
                 <td>${p.reference}</td>
                 <td>
                   <div style="min-width:130px">
@@ -175,7 +177,7 @@
           document.getElementById('stockModalBody').innerHTML = `
             <div class="detail-panel">
               <div class="aside-row">
-                <img src="${product.image}" alt="${product.name}" style="width:64px;height:64px;border-radius:10px;object-fit:cover">
+                <img src="${product.image || ''}" alt="${product.name}" style="width:64px;height:64px;border-radius:10px;object-fit:cover">
                 <div>
                   <p><strong>${product.name}</strong></p>
                   <span>${product.reference} • ${formatPrice(product.price)}</span>
@@ -228,19 +230,26 @@
           });
 
           document.getElementById('cancelStock').addEventListener('click', () => modal.classList.remove('open'));
-          document.getElementById('saveStock').addEventListener('click', () => {
+          document.getElementById('saveStock').addEventListener('click', async () => {
             const newQty = Math.max(0, parseInt(qtyInput.value, 10) || 0);
-            product.stock = newQty;
-            showToast('Stock de « ' + product.name + ' » mis à jour.');
+            const btn = document.getElementById('saveStock');
+            btn.disabled = true;
+            try {
+              await adminDB.updateStock(product.id, newQty);
+              await load();
+              showToast('Stock de « ' + product.name + ' » mis à jour.');
+            } catch (err) {
+              btn.disabled = false;
+              showToast((err && err.message) || 'Erreur lors de la mise à jour.', 'error');
+            }
             modal.classList.remove('open');
-            renderStock();
           });
         }
 
         tbody.addEventListener('click', (e) => {
           const btn = e.target.closest('.btn-adjust');
           if (!btn) return;
-          const product = findProduct(parseInt(btn.dataset.id, 10));
+          const product = products.find(p => p.id === parseInt(btn.dataset.id, 10));
           if (product) openStockModal(product);
         });
 
@@ -256,16 +265,16 @@
         searchInput.addEventListener('input', renderStock);
 
         document.getElementById('openMovementBtn').addEventListener('click', () => {
-          if (adminProducts.length === 0) { showToast('Aucun produit disponible.', 'warning'); return; }
-          openStockModal(adminProducts[0]);
+          if (products.length === 0) { showToast('Aucun produit disponible.', 'warning'); return; }
+          openStockModal(products[0]);
         });
 
         document.getElementById('exportBtn').addEventListener('click', () => {
           const rows = [['Produit', 'Référence', 'Catégorie', 'Quantité', 'Statut']];
-          adminProducts.forEach(p => {
-            const cat = adminCategories.find(c => c.slug === p.category);
+          products.forEach(p => {
+            const cat = categories.find(c => c.slug === p.category);
             const lvl = stockLevel(p);
-            rows.push([p.name, p.reference, cat ? cat.name : p.category, p.stock, lvl === 'out' ? 'En rupture' : lvl === 'low' ? 'Stock faible' : 'Disponible']);
+            rows.push([p.name, p.reference, cat ? cat.name : (p.categoryName || p.category), p.stock, lvl === 'out' ? 'En rupture' : lvl === 'low' ? 'Stock faible' : 'Disponible']);
           });
           const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\r\n');
           const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -281,7 +290,14 @@
         modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape') modal.classList.remove('open'); });
 
-        renderStock();
+        async function load() {
+          products = await adminDB.products();
+          categories = await adminDB.categories();
+          document.getElementById('chipAll').textContent = products.length;
+          renderStock();
+        }
+
+        adminGate(content, load);
       });
     </script>
 

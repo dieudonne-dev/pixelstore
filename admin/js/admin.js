@@ -93,11 +93,17 @@ function initGlobalSearch() {
   });
 }
 
-// Bouton déconnexion : retour au site public
+// Bouton déconnexion : se déconnecte de Supabase puis retour au site public
 function initSidebarLogout() {
   const logout = document.querySelector('.logout-btn');
   if (logout) {
-    logout.addEventListener('click', () => window.location.href = '../index.html');
+    logout.addEventListener('click', () => {
+      if (window.adminAuth && window.adminAuth.signOut) {
+        window.adminAuth.signOut().finally(() => window.location.href = '../index.html');
+      } else {
+        window.location.href = '../index.html';
+      }
+    });
   }
 }
 

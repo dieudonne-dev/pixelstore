@@ -11,6 +11,8 @@
   </head>
   <body>
 
+    <script src="js/admin-config.js"></script>
+    <script src="js/admin-supabase.js"></script>
     <script src="js/layout.js"></script>
     <script src="js/admin.js"></script>
 
@@ -19,350 +21,296 @@
         const content = renderAdminLayout('produits');
 
         const params = new URLSearchParams(window.location.search);
-        const editId = params.get('id') ? parseInt(params.get('id'), 10) : null;
-        const product = editId ? findProduct(editId) : null;
+        const editIdRaw = params.get('id');
+        const editId = editIdRaw ? parseInt(editIdRaw, 10) : null;
 
-        // Valeurs par défaut (pour ajout) ou celles du produit (pour édition)
-        const isEdit = !!product;
-        const v = {
-          name: product ? product.name : '',
-          category: product ? product.category : 'ordinateurs',
-          brand: product ? product.brand : 'PixelStore',
-          reference: product ? product.reference : '',
-          price: product ? product.price : '',
-          oldPrice: product ? product.oldPrice : '',
-          stock: product ? product.stock : '',
-          rating: product ? product.rating : '4.5',
-          tag: product ? product.tag : '',
-          image: product ? product.image : '',
-          featured: product ? product.featured : false,
-          active: product ? product.active : true
-        };
+        adminGate(content, async () => {
+          const categories = await adminDB.categories();
+          let product = null;
+          let isEdit = false;
+          if (editId) {
+            const all = await adminDB.products();
+            product = all.find(p => p.id === editId) || null;
+            isEdit = !!product;
+          }
 
-        // Spécifications techniques (reprises depuis data.js pour l'édition)
-        const specs = product ? [
-          ['Processeur', 'Intel Core i7-13700H'], ['Mémoire RAM', '16 Go DDR5'], ['Stockage', 'SSD NVMe 1 To']
-        ] : [['', '']];
+          const v = {
+            name: product ? product.name : '',
+            category: product ? product.category : 'ordinateurs',
+            brand: product ? product.brand : 'PixelStore',
+            reference: product ? product.reference : '',
+            price: product ? product.price : '',
+            oldPrice: product ? product.oldPrice : '',
+            stock: product ? product.stock : '',
+            rating: product ? product.rating : '4.5',
+            tag: product ? (product.tag || '') : '',
+            image: product ? (product.image || '') : '',
+            featured: product ? product.featured : false,
+            active: product ? product.active : true
+          };
 
-        content.innerHTML = `
-          <div class="page-breadcrumb">
-            <a href="index.html">${ICONS.home} Tableau de bord</a>
-            <span>/</span>
-            <a href="produits.html">Produits</a>
-            <span>/</span>
-            <span>${isEdit ? 'Modifier' : 'Ajouter'} un produit</span>
-          </div>
+          const specs = product
+            ? ([['', '']])
+            : [['', '']];
 
-          <div class="page-header">
-            <div>
-              <h1 class="page-title">${isEdit ? 'Modifier' : 'Ajouter'} un produit</h1>
-              <p class="page-subtitle">${isEdit ? `Vous modifiez actuellement « <strong>${product.name}</strong> » (${product.reference}).` : 'Renseignez les informations du nouveau produit.'}</p>
-            </div>
-            <a href="produits.html" class="btn btn-secondary">Retour à la liste</a>
-          </div>
-
-          <div class="alert ${isEdit ? 'alert-success' : 'alert-warning'}">
-            ${isEdit
-              ? '<span>Vous êtes en mode <strong>édition</strong>. Vos modifications seront appliquées au catalogue.</span>'
-              : '<span>Formulaire d\'<strong>ajout</strong>. Tous les champs marqués d\'une * sont obligatoires.</span>'}
-          </div>
-
-          <form id="productForm" novalidate>
-            <!-- ==== Informations générales ==== -->
-            <div class="card" style="margin-bottom:18px">
-              <div class="card-header">
-                <h3 class="card-title">Informations générales</h3>
-              </div>
-              <div class="form-grid">
-                <div class="form-group span-2">
-                  <label for="fName">Nom du produit <span class="required">*</span></label>
-                  <input type="text" id="fName" value="${v.name}" placeholder="Ex : OrdiPro Pixel X15">
-                </div>
-                <div class="form-group">
-                  <label for="fCategory">Catégorie <span class="required">*</span></label>
-                  <select id="fCategory">
-                    ${adminCategories.map(c => `<option value="${c.slug}" ${v.category === c.slug ? 'selected' : ''}>${c.name}</option>`).join('')}
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label for="fBrand">Marque</label>
-                  <input type="text" id="fBrand" value="${v.brand}" placeholder="PixelStore">
-                </div>
-                <div class="form-group">
-                  <label for="fReference">Référence <span class="required">*</span></label>
-                  <input type="text" id="fReference" value="${v.reference}" placeholder="ORD-PX-X15">
-                </div>
-                <div class="form-group">
-                  <label for="fTag">Badge / libellé</label>
-                  <input type="text" id="fTag" value="${v.tag}" placeholder="Nouveau, Top vente...">
-                </div>
-              </div>
+          content.innerHTML = `
+            <div class="page-breadcrumb">
+              <a href="index.html">${ICONS.home} Tableau de bord</a>
+              <span>/</span>
+              <a href="produits.html">Produits</a>
+              <span>/</span>
+              <span>${isEdit ? 'Modifier' : 'Ajouter'} un produit</span>
             </div>
 
-            <!-- ==== Prix & stock ==== -->
-            <div class="card" style="margin-bottom:18px">
-              <div class="card-header">
-                <h3 class="card-title">Prix & stock</h3>
+            <div class="page-header">
+              <div>
+                <h1 class="page-title">${isEdit ? 'Modifier' : 'Ajouter'} un produit</h1>
+                <p class="page-subtitle">${isEdit ? `Vous modifiez actuellement « <strong>${product.name}</strong> » (${product.reference}).` : 'Renseignez les informations du nouveau produit.'}</p>
               </div>
-              <div class="form-grid-3">
-                <div class="form-group">
-                  <label for="fPrice">Prix de vente (BIF) <span class="required">*</span></label>
-                  <div class="input-prefix">
-                    <span>BIF</span>
-                    <input type="number" id="fPrice" value="${v.price}" placeholder="850000">
+              <a href="produits.html" class="btn btn-secondary">Retour à la liste</a>
+            </div>
+
+            <div class="alert ${isEdit ? 'alert-success' : 'alert-warning'}">
+              ${isEdit
+                ? '<span>Vous êtes en mode <strong>édition</strong>. Vos modifications seront appliquées au catalogue.</span>'
+                : '<span>Formulaire d\'<strong>ajout</strong>. Tous les champs marqués d\'une * sont obligatoires.</span>'}
+            </div>
+
+            <form id="productForm" novalidate>
+              <div class="card" style="margin-bottom:18px">
+                <div class="card-header">
+                  <h3 class="card-title">Informations générales</h3>
+                </div>
+                <div class="form-grid">
+                  <div class="form-group span-2">
+                    <label for="fName">Nom du produit <span class="required">*</span></label>
+                    <input type="text" id="fName" value="${v.name}" placeholder="Ex : OrdiPro Pixel X15">
+                  </div>
+                  <div class="form-group">
+                    <label for="fCategory">Catégorie <span class="required">*</span></label>
+                    <select id="fCategory">
+                      ${categories.map(c => `<option value="${c.slug}" ${v.category === c.slug ? 'selected' : ''}>${c.name}</option>`).join('')}
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="fBrand">Marque</label>
+                    <input type="text" id="fBrand" value="${v.brand}" placeholder="PixelStore">
+                  </div>
+                  <div class="form-group">
+                    <label for="fReference">Référence <span class="required">*</span></label>
+                    <input type="text" id="fReference" value="${v.reference}" placeholder="ORD-PX-X15">
+                  </div>
+                  <div class="form-group">
+                    <label for="fTag">Badge / libellé</label>
+                    <input type="text" id="fTag" value="${v.tag}" placeholder="Nouveau, Top vente...">
                   </div>
                 </div>
-                <div class="form-group">
-                  <label for="fOldPrice">Ancien prix (BIF) <span class="hint">facultatif</span></label>
-                  <div class="input-prefix">
-                    <span>BIF</span>
-                    <input type="number" id="fOldPrice" value="${v.oldPrice}" placeholder="950000">
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label for="fStock">Stock disponible <span class="required">*</span></label>
-                  <input type="number" id="fStock" value="${v.stock}" placeholder="10" min="0">
-                </div>
               </div>
-              <div class="form-group" style="margin-top:16px">
-                <label for="fRating">Note moyenne / 5</label>
-                <input type="number" id="fRating" value="${v.rating}" placeholder="4.5" step="0.1" min="0" max="5">
-              </div>
-            </div>
 
-            <!-- ==== Image ==== -->
-            <div class="card" style="margin-bottom:18px">
-              <div class="card-header">
-                <h3 class="card-title">Image principale</h3>
-              </div>
-              <div class="form-group">
-                <label>Aperçu</label>
-                <div class="upload-area" id="dropZone" tabindex="0" role="button" aria-label="Charger une image">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 12H2"></path><path d="M12 2v10"></path></svg>
-                  <strong id="dropText">Cliquez pour choisir une image ou glissez-déposez ici</strong>
-                  <span>JPG, PNG, WEBP, GIF — taille max 5 Mo</span>
+              <div class="card" style="margin-bottom:18px">
+                <div class="card-header">
+                  <h3 class="card-title">Prix & stock</h3>
                 </div>
-                <input type="file" id="fImageFile" accept="image/*" hidden>
-                <input type="hidden" id="fImage" value="${v.image}">
-                <span class="hint">L'image sélectionnée est intégrée directement au produit (format base64).</span>
-                <div id="imagePreviewWrap" style="display:${v.image ? 'flex' : 'none'};align-items:center;gap:16px;margin-top:14px">
-                  <img class="upload-preview" id="imagePreview" src="${v.image || ''}" alt="Aperçu">
-                  <button type="button" class="btn btn-danger btn-sm" id="removeImage">Retirer l'image</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- ==== Options ==== -->
-            <div class="card" style="margin-bottom:18px">
-              <div class="card-header">
-                <h3 class="card-title">Options</h3>
-              </div>
-              <div class="form-row-inline">
-                <label class="switch-label" for="fFeatured">Mettre en avant sur la page d'accueil</label>
-                <label class="switch">
-                  <input type="checkbox" id="fFeatured" ${v.featured ? 'checked' : ''}>
-                  <span class="slider"></span>
-                </label>
-              </div>
-              <div class="form-row-inline" style="margin-top:12px">
-                <label class="switch-label" for="fActive">Produit actif (visible en boutique)</label>
-                <label class="switch">
-                  <input type="checkbox" id="fActive" ${v.active ? 'checked' : ''}>
-                  <span class="slider"></span>
-                </label>
-              </div>
-            </div>
-
-            <!-- ==== Spécifications techniques ==== -->
-            <div class="card" style="margin-bottom:18px">
-              <div class="card-header">
-                <h3 class="card-title">Spécifications techniques</h3>
-                <button type="button" class="btn btn-secondary btn-sm" id="addSpec">+ Ajouter une ligne</button>
-              </div>
-              <div id="specsContainer">
-                ${specs.map(s => `
-                  <div class="form-spec">
-                    <div class="form-spec-row">
-                      <input type="text" class="spec-name" placeholder="Nom (ex : Processeur)" value="${s[0]}">
-                      <input type="text" class="spec-value" placeholder="Valeur (ex : Intel i7)" value="${s[1]}">
-                      <button type="button" class="btn-danger btn-icon btn-remove-spec" title="Retirer">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                      </button>
+                <div class="form-grid-3">
+                  <div class="form-group">
+                    <label for="fPrice">Prix de vente (BIF) <span class="required">*</span></label>
+                    <div class="input-prefix">
+                      <span>BIF</span>
+                      <input type="number" id="fPrice" value="${v.price}" placeholder="850000">
                     </div>
                   </div>
-                `).join('')}
+                  <div class="form-group">
+                    <label for="fOldPrice">Ancien prix (BIF) <span class="hint">facultatif</span></label>
+                    <div class="input-prefix">
+                      <span>BIF</span>
+                      <input type="number" id="fOldPrice" value="${v.oldPrice}" placeholder="950000">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="fStock">Stock disponible <span class="required">*</span></label>
+                    <input type="number" id="fStock" value="${v.stock}" placeholder="10" min="0">
+                  </div>
+                </div>
+                <div class="form-group" style="margin-top:16px">
+                  <label for="fRating">Note moyenne / 5</label>
+                  <input type="number" id="fRating" value="${v.rating}" placeholder="4.5" step="0.1" min="0" max="5">
+                </div>
               </div>
-            </div>
 
-            <!-- ==== Actions ==== -->
-            <div class="form-actions">
-              <a href="produits.html" class="btn btn-ghost">Annuler</a>
-              <button type="submit" class="btn btn-primary">
-                ${isEdit
-                  ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>'
-                  : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>'}
-                ${isEdit ? 'Enregistrer les modifications' : 'Créer le produit'}
-              </button>
-            </div>
-          </form>
-        `;
+              <div class="card" style="margin-bottom:18px">
+                <div class="card-header">
+                  <h3 class="card-title">Image principale</h3>
+                </div>
+                <div class="form-group">
+                  <label>Aperçu</label>
+                  <div class="upload-area" id="dropZone" tabindex="0" role="button" aria-label="Charger une image">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 12H2"></path><path d="M12 2v10"></path></svg>
+                    <strong id="dropText">Cliquez pour choisir une image ou glissez-déposez ici</strong>
+                    <span>JPG, PNG, WEBP, GIF — taille max 5 Mo</span>
+                  </div>
+                  <input type="file" id="fImageFile" accept="image/*" hidden>
+                  <input type="hidden" id="fImage" value="${v.image}">
+                  <span class="hint">L'image sélectionnée est intégrée directement au produit (format base64).</span>
+                  <div id="imagePreviewWrap" style="display:${v.image ? 'flex' : 'none'};align-items:center;gap:16px;margin-top:14px">
+                    <img class="upload-preview" id="imagePreview" src="${v.image || ''}" alt="Aperçu">
+                    <button type="button" class="btn btn-danger btn-sm" id="removeImage">Retirer l'image</button>
+                  </div>
+                </div>
+              </div>
 
-        // ---- Chargement de l'image (cliquer / glisser-déposer) ----
-        const imageInput = document.getElementById('fImage');
-        const imagePreview = document.getElementById('imagePreview');
-        const imagePreviewWrap = document.getElementById('imagePreviewWrap');
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fImageFile');
-        const removeImageBtn = document.getElementById('removeImage');
-        const MAX_SIZE = 5 * 1024 * 1024; // 5 Mo
+              <div class="card" style="margin-bottom:18px">
+                <div class="card-header">
+                  <h3 class="card-title">Options</h3>
+                </div>
+                <div class="form-row-inline">
+                  <label class="switch-label" for="fFeatured">Mettre en avant sur la page d'accueil</label>
+                  <label class="switch">
+                    <input type="checkbox" id="fFeatured" ${v.featured ? 'checked' : ''}>
+                    <span class="slider"></span>
+                  </label>
+                </div>
+                <div class="form-row-inline" style="margin-top:12px">
+                  <label class="switch-label" for="fActive">Produit actif (visible en boutique)</label>
+                  <label class="switch">
+                    <input type="checkbox" id="fActive" ${v.active ? 'checked' : ''}>
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
 
-        imageInput.addEventListener('input', () => {
-          if (imageInput.value) imagePreview.src = imageInput.value;
-        });
+              <div class="card" style="margin-bottom:18px">
+                <div class="card-header">
+                  <h3 class="card-title">Spécifications techniques</h3>
+                  <button type="button" class="btn btn-secondary btn-sm" id="addSpec">+ Ajouter une ligne</button>
+                </div>
+                <div id="specsContainer">
+                  ${specs.map(s => `
+                    <div class="form-spec">
+                      <div class="form-spec-row">
+                        <input type="text" class="spec-name" placeholder="Nom (ex : Processeur)" value="${s[0]}">
+                        <input type="text" class="spec-value" placeholder="Valeur (ex : Intel i7)" value="${s[1]}">
+                        <button type="button" class="btn-danger btn-icon btn-remove-spec" title="Retirer">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
 
-        // Ouvre l'explorateur de fichiers au clic / au clavier (Entrée)
-        dropZone.addEventListener('click', () => fileInput.click());
-        dropZone.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            fileInput.click();
-          }
-        });
-
-        // Sélection manuelle d'un fichier
-        fileInput.addEventListener('change', () => {
-          if (fileInput.files && fileInput.files[0]) {
-            handleFile(fileInput.files[0]);
-          }
-          fileInput.value = '';
-        });
-
-        // Glisser-déposer
-        ['dragenter', 'dragover'].forEach(type => {
-          dropZone.addEventListener(type, (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-          });
-        });
-        ['dragleave', 'drop'].forEach(type => {
-          dropZone.addEventListener(type, (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-          });
-        });
-        dropZone.addEventListener('drop', (e) => {
-          if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            handleFile(e.dataTransfer.files[0]);
-          }
-        });
-
-        // Traitement du fichier sélectionné
-        function handleFile(file) {
-          if (!file.type.startsWith('image/')) {
-            showToast('Veuillez sélectionner un fichier image (JPG, PNG, WEBP, GIF).', 'error');
-            return;
-          }
-          if (file.size > MAX_SIZE) {
-            showToast('L\'image dépasse la taille maximale de 5 Mo.', 'error');
-            return;
-          }
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            imageInput.value = ev.target.result; // base64
-            imagePreview.src = ev.target.result;
-            imagePreviewWrap.style.display = 'flex';
-            dropZone.style.display = 'none';
-            showToast('Image chargée avec succès.');
-          };
-          reader.onerror = () => showToast('Impossible de lire ce fichier image.', 'error');
-          reader.readAsDataURL(file);
-        }
-
-        // Masquer la zone de drop si une image est déjà présente
-        if (imageInput.value) dropZone.style.display = 'none';
-
-        // Retirer l'image
-        removeImageBtn.addEventListener('click', () => {
-          imageInput.value = '';
-          imagePreview.src = '';
-          imagePreviewWrap.style.display = 'none';
-          dropZone.style.display = '';
-          showToast('Image retirée.');
-        });
-
-        // ---- Lignes de spécifications dynamiques ----
-        const specsContainer = document.getElementById('specsContainer');
-        document.getElementById('addSpec').addEventListener('click', () => {
-          const row = document.createElement('div');
-          row.className = 'form-spec';
-          row.innerHTML = `
-            <div class="form-spec-row">
-              <input type="text" class="spec-name" placeholder="Nom">
-              <input type="text" class="spec-value" placeholder="Valeur">
-              <button type="button" class="btn-danger btn-icon btn-remove-spec" title="Retirer">
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              </button>
-            </div>
+              <div class="form-actions">
+                <a href="produits.html" class="btn btn-ghost">Annuler</a>
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                  ${isEdit ? 'Enregistrer les modifications' : 'Créer le produit'}
+                </button>
+              </div>
+            </form>
           `;
-          specsContainer.appendChild(row);
-        });
 
-        specsContainer.addEventListener('click', (e) => {
-          const btn = e.target.closest('.btn-remove-spec');
-          if (btn && specsContainer.querySelectorAll('.form-spec').length > 1) {
-            btn.closest('.form-spec').remove();
-          } else if (btn) {
-            showToast('Au moins une spécification est requise.', 'warning');
+          // ---- Image ----
+          const imageInput = document.getElementById('fImage');
+          const imagePreview = document.getElementById('imagePreview');
+          const imagePreviewWrap = document.getElementById('imagePreviewWrap');
+          const dropZone = document.getElementById('dropZone');
+          const fileInput = document.getElementById('fImageFile');
+          const removeImageBtn = document.getElementById('removeImage');
+          const MAX_SIZE = 5 * 1024 * 1024;
+
+          imageInput.addEventListener('input', () => { if (imageInput.value) imagePreview.src = imageInput.value; });
+          dropZone.addEventListener('click', () => fileInput.click());
+          dropZone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
+          fileInput.addEventListener('change', () => { if (fileInput.files && fileInput.files[0]) handleFile(fileInput.files[0]); fileInput.value = ''; });
+
+          ['dragenter', 'dragover'].forEach(type => dropZone.addEventListener(type, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); }));
+          ['dragleave', 'drop'].forEach(type => dropZone.addEventListener(type, (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); }));
+          dropZone.addEventListener('drop', (e) => { if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+
+          function handleFile(file) {
+            if (!file.type.startsWith('image/')) { showToast('Veuillez sélectionner un fichier image.', 'error'); return; }
+            if (file.size > MAX_SIZE) { showToast('L\'image dépasse la taille maximale de 5 Mo.', 'error'); return; }
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              imageInput.value = ev.target.result;
+              imagePreview.src = ev.target.result;
+              imagePreviewWrap.style.display = 'flex';
+              dropZone.style.display = 'none';
+              showToast('Image chargée avec succès.');
+            };
+            reader.onerror = () => showToast('Impossible de lire ce fichier image.', 'error');
+            reader.readAsDataURL(file);
           }
-        });
 
-        // ---- Soumission ----
-        document.getElementById('productForm').addEventListener('submit', (e) => {
-          e.preventDefault();
-          const name = document.getElementById('fName').value.trim();
-          const reference = document.getElementById('fReference').value.trim();
-          const price = document.getElementById('fPrice').value;
-
-          if (!name || !reference || !price) {
-            showToast('Veuillez remplir les champs obligatoires (nom, référence, prix).', 'error');
-            return;
-          }
-
-          const collectedSpecs = [];
-          specsContainer.querySelectorAll('.form-spec').forEach(row => {
-            const n = row.querySelector('.spec-name').value.trim();
-            const val = row.querySelector('.spec-value').value.trim();
-            if (n && val) collectedSpecs.push([n, val]);
+          if (imageInput.value) dropZone.style.display = 'none';
+          removeImageBtn.addEventListener('click', () => {
+            imageInput.value = ''; imagePreview.src = ''; imagePreviewWrap.style.display = 'none'; dropZone.style.display = '';
           });
 
-          const data = {
-            name,
-            category: document.getElementById('fCategory').value,
-            brand: document.getElementById('fBrand').value.trim() || 'PixelStore',
-            reference,
-            tag: document.getElementById('fTag').value.trim(),
-            price: Number(price),
-            oldPrice: document.getElementById('fOldPrice').value ? Number(document.getElementById('fOldPrice').value) : null,
-            stock: Number(document.getElementById('fStock').value) || 0,
-            rating: Number(document.getElementById('fRating').value) || 0,
-            image: imageInput.value.trim() || '../img/products/1496181133206-80ce9b88a853.jpg',
-            featured: document.getElementById('fFeatured').checked,
-            active: document.getElementById('fActive').checked,
-            specs: collectedSpecs
-          };
+          // ---- Spécifications ----
+          const specsContainer = document.getElementById('specsContainer');
+          document.getElementById('addSpec').addEventListener('click', () => {
+            const row = document.createElement('div');
+            row.className = 'form-spec';
+            row.innerHTML = `
+              <div class="form-spec-row">
+                <input type="text" class="spec-name" placeholder="Nom">
+                <input type="text" class="spec-value" placeholder="Valeur">
+                <button type="button" class="btn-danger btn-icon btn-remove-spec" title="Retirer">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              </div>
+            `;
+            specsContainer.appendChild(row);
+          });
+          specsContainer.addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-remove-spec');
+            if (btn && specsContainer.querySelectorAll('.form-spec').length > 1) btn.closest('.form-spec').remove();
+          });
 
-          if (isEdit) {
-            Object.assign(product, data);
-            showToast('Produit mis à jour avec succès.');
-          } else {
-            data.id = Math.max(...adminProducts.map(p => p.id)) + 1;
-            adminProducts.push(data);
-            showToast('Produit créé avec succès.');
-          }
+          // ---- Soumission ----
+          document.getElementById('productForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            const name = document.getElementById('fName').value.trim();
+            const reference = document.getElementById('fReference').value.trim();
+            const price = document.getElementById('fPrice').value;
+            if (!name || !reference || !price) { showToast('Veuillez remplir les champs obligatoires (nom, référence, prix).', 'error'); return; }
 
-          saveAdminProducts();
+            const collectedSpecs = [];
+            specsContainer.querySelectorAll('.form-spec').forEach(row => {
+              const n = row.querySelector('.spec-name').value.trim();
+              const val = row.querySelector('.spec-value').value.trim();
+              if (n && val) collectedSpecs.push([n, val]);
+            });
 
-          setTimeout(() => window.location.href = 'produits.html', 1200);
+            const data = {
+              id: isEdit ? editId : null,
+              name,
+              category: document.getElementById('fCategory').value,
+              brand: document.getElementById('fBrand').value.trim() || 'PixelStore',
+              reference,
+              tag: document.getElementById('fTag').value.trim(),
+              price: Number(price),
+              oldPrice: document.getElementById('fOldPrice').value ? Number(document.getElementById('fOldPrice').value) : null,
+              stock: Number(document.getElementById('fStock').value) || 0,
+              rating: Number(document.getElementById('fRating').value) || 0,
+              image: imageInput.value.trim() || '',
+              featured: document.getElementById('fFeatured').checked,
+              active: document.getElementById('fActive').checked,
+              specs: collectedSpecs
+            };
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = isEdit ? 'Enregistrement…' : 'Création…';
+            try {
+              await adminDB.saveProduct(data);
+              showToast(isEdit ? 'Produit mis à jour avec succès.' : 'Produit créé avec succès.');
+              setTimeout(() => window.location.href = 'produits.html', 1200);
+            } catch (err) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = isEdit ? 'Enregistrer les modifications' : 'Créer le produit';
+              showToast((err && err.message) || 'Erreur lors de l\'enregistrement.', 'error');
+            }
+          });
         });
       });
     </script>
