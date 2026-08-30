@@ -303,20 +303,27 @@ window.PixelAuth = {};        // API publique
 
   // ---- Initialisation ----
   function init() {
-    // Si le SDK n'est pas dispo, on n'affiche rien et on ne casse rien.
-    waitForSupabase().then(function (client) {
-      if (!client) return; // Supabase indisponible : pas d'auth, le site reste utilisable
-      client.auth.getSession().then(function (res) {
-        window.storeUser = res && res.data && res.data.session ? res.data.session.user : null;
-        renderHeader();
-        // Réagit aux changements d'état (connexion par une autre fenêtre, etc.)
-        client.auth.onAuthStateChange(function (event, session) {
-          window.storeUser = session ? session.user : null;
-          renderHeader();
-          notifyUserChange(window.storeUser);
+    // Affiche immédiatement l'interface (état déconnecté par défaut), même si
+    // Supabase n'est pas encore prêt : le bouton "Connexion" apparaît sans délai.
+    // Il sera remplacé par le menu utilisateur si une session est trouvée.
+    renderHeader();
+
+    // Ensuite, on récupère la session (et on réagit aux changements d'état).
+    if (typeof waitForSupabase === 'function') {
+      waitForSupabase().then(function (client) {
+        if (!client) return; // Supabase indisponible : on reste en mode déconnecté
+        client.auth.getSession().then(function (res) {
+          window.storeUser = res && res.data && res.data.session ? res.data.session.user : null;
+          if (window.storeUser) renderHeader();
+          // Réagit aux connexions/déconnexions (même via une autre fenêtre).
+          client.auth.onAuthStateChange(function (event, session) {
+            window.storeUser = session ? session.user : null;
+            renderHeader();
+            notifyUserChange(window.storeUser);
+          });
         });
       });
-    });
+    }
   }
 
   if (typeof waitForSupabase === 'function') {
