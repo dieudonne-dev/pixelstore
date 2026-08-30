@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codes promo — PixelStore Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="css/admin.css">
+  </head>
+  <body>
+
+    <script src="js/layout.js"></script>
+    <script src="js/admin.js"></script>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const content = renderAdminLayout('coupons');
+
+        let editingId = null;
+
+        content.innerHTML = `
+          <div class="page-breadcrumb">
+            <a href="index.html">${ICONS.home} Tableau de bord</a>
+            <span>/</span>
+            <span>Codes promo</span>
+          </div>
+
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Codes promo</h1>
+              <p class="page-subtitle">Créez et gérez vos remises pour fidéliser vos clients.</p>
+            </div>
+            <button class="btn btn-primary" id="newCouponBtn">+ Nouveau code</button>
+          </div>
+
+          <div class="stats-row">
+            <div class="stat-mini">
+              <div class="stat-mini-value">${adminCoupons.length}</div>
+              <div class="stat-mini-label">Codes promo</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini-value">${adminCoupons.reduce((s, c) => s + c.uses, 0)}</div>
+              <div class="stat-mini-label">Utilisations au total</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini-value">${adminCoupons.filter(c => c.active).length}</div>
+              <div class="stat-mini-label">Coupons actifs</div>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Remise</th>
+                  <th>Utilisations</th>
+                  <th>Limite</th>
+                  <th>Statut</th>
+                  <th style="text-align:right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="couponsBody"></tbody>
+            </table>
+          </div>
+
+          <!-- Modal formulaire coupon -->
+          <div class="modal-backdrop" id="couponModal">
+            <div class="modal">
+              <div class="modal-header">
+                <h3 id="couponModalTitle">Nouveau code promo</h3>
+                <button class="modal-close" id="couponModalClose" aria-label="Fermer">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              </div>
+              <form id="couponForm">
+                <div class="form-grid" style="grid-template-columns:1fr 1fr">
+                  <div class="form-group">
+                    <label for="cCode">Code <span class="required">*</span></label>
+                    <input type="text" id="cCode" placeholder="ETE2026" style="text-transform:uppercase">
+                  </div>
+                  <div class="form-group">
+                    <label for="cType">Type de remise</label>
+                    <select id="cType">
+                      <option value="percentage">Pourcentage (%)</option>
+                      <option value="fixed">Montant fixe (BIF)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="cValue">Valeur <span class="required">*</span></label>
+                    <input type="number" id="cValue" placeholder="10">
+                  </div>
+                  <div class="form-group">
+                    <label for="cUses">Utilisations actuelles</label>
+                    <input type="number" id="cUses" value="0" min="0">
+                  </div>
+                  <div class="form-group">
+                    <label for="cMax">Limite d'utilisations <span class="hint">vide = illimité</span></label>
+                    <input type="number" id="cMax" placeholder="100">
+                  </div>
+                  <div class="form-group">
+                    <label>Actif</label>
+                    <div style="padding-top:8px">
+                      <label class="switch">
+                        <input type="checkbox" id="cActive" checked>
+                        <span class="slider"></span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button type="button" class="btn btn-ghost" id="cancelCoupon">Annuler</button>
+                  <button type="submit" class="btn btn-primary" id="saveCoupon">Créer le code</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Modal confirmation suppression -->
+          <div class="modal-backdrop" id="deleteModal">
+            <div class="modal">
+              <div class="modal-header">
+                <h3>Supprimer le code promo</h3>
+                <button class="modal-close" id="deleteModalClose" aria-label="Fermer">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              </div>
+              <p style="font-size:0.92rem;color:var(--text-secondary)">Voulez-vous vraiment supprimer le code <strong id="deleteCode" style="color:var(--text-primary)"></strong> ?</p>
+              <div class="modal-footer">
+                <button class="btn btn-ghost" id="cancelDelete">Annuler</button>
+                <button class="btn btn-danger" id="confirmDelete">Supprimer</button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        const tbody = document.getElementById('couponsBody');
+        const couponModal = document.getElementById('couponModal');
+        const deleteModal = document.getElementById('deleteModal');
+        let pendingDeleteId = null;
+
+        function formatDiscount(c) {
+          return c.type === 'percentage'
+            ? c.value + ' %'
+            : formatPrice(c.value);
+        }
+
+        function renderCoupons() {
+          tbody.innerHTML = adminCoupons.map(c => `
+            <tr>
+              <td>
+                <span class="coupon-code">${c.code}</span>
+              </td>
+              <td class="price-text">${formatDiscount(c)}</td>
+              <td>${c.uses} / ${c.max ? c.max : '∞'}</td>
+              <td>
+                <div style="min-width:120px">
+                  <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px">
+                    <span>${c.uses}</span><span>${c.max ? c.max : '∞'}</span>
+                  </div>
+                  <div style="height:6px;background:var(--bg-primary);border-radius:999px">
+                    <div style="height:100%;border-radius:999px;background:var(--accent-green);width:${c.max ? Math.min(100, Math.round((c.uses / c.max) * 100)) : 20}%"></div>
+                  </div>
+                </div>
+              </td>
+              <td>${c.active ? '<span class="badge badge-green">Actif</span>' : '<span class="badge badge-gray">Inactif</span>'}</td>
+              <td>
+                <div style="display:flex;gap:6px;justify-content:flex-end">
+                  <button class="btn btn-secondary btn-icon btn-edit-coupon" data-id="${c.id}" title="Modifier" aria-label="Modifier">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"></path></svg>
+                  </button>
+                  <button class="btn btn-danger btn-icon btn-delete-coupon" data-id="${c.id}" title="Supprimer" aria-label="Supprimer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `).join('') || '<tr><td colspan="6"><div class="empty-state"><h3>Aucun code promo</h3><p>Cliquez sur « + Nouveau code » pour créer votre première remise.</p></div></td></tr>';
+        }
+
+        function openForm(coupon) {
+          if (coupon) {
+            editingId = coupon.id;
+            document.getElementById('couponModalTitle').textContent = 'Modifier le code promo';
+            document.getElementById('saveCoupon').textContent = 'Enregistrer les modifications';
+            document.getElementById('cCode').value = coupon.code;
+            document.getElementById('cType').value = coupon.type;
+            document.getElementById('cValue').value = coupon.value;
+            document.getElementById('cUses').value = coupon.uses;
+            document.getElementById('cMax').value = coupon.max || '';
+            document.getElementById('cActive').checked = coupon.active;
+          } else {
+            editingId = null;
+            document.getElementById('couponModalTitle').textContent = 'Nouveau code promo';
+            document.getElementById('saveCoupon').textContent = 'Créer le code';
+            document.getElementById('cCode').value = '';
+            document.getElementById('cType').value = 'percentage';
+            document.getElementById('cValue').value = '';
+            document.getElementById('cUses').value = 0;
+            document.getElementById('cMax').value = '';
+            document.getElementById('cActive').checked = true;
+          }
+          couponModal.classList.add('open');
+        }
+
+        document.getElementById('newCouponBtn').addEventListener('click', () => openForm(null));
+        document.getElementById('cancelCoupon').addEventListener('click', () => couponModal.classList.remove('open'));
+        document.getElementById('couponModalClose').addEventListener('click', () => couponModal.classList.remove('open'));
+        couponModal.addEventListener('click', (e) => { if (e.target === couponModal) couponModal.classList.remove('open'); });
+
+        document.getElementById('couponForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const code = document.getElementById('cCode').value.trim().toUpperCase();
+          const value = Number(document.getElementById('cValue').value);
+          const uses = Number(document.getElementById('cUses').value) || 0;
+          const max = document.getElementById('cMax').value ? Number(document.getElementById('cMax').value) : null;
+          const type = document.getElementById('cType').value;
+
+          if (!code) { showToast('Le code est obligatoire.', 'error'); return; }
+          if (!value || value <= 0) { showToast('La valeur de la remise est invalide.', 'error'); return; }
+
+          if (editingId) {
+            const c = adminCoupons.find(x => x.id === editingId);
+            if (c) Object.assign(c, { code, value, uses, max, type, active: document.getElementById('cActive').checked });
+            showToast('Code promo mis à jour.');
+          } else {
+            adminCoupons.push({
+              id: Math.max(0, ...adminCoupons.map(c => c.id)) + 1,
+              code, type, value, uses, max,
+              active: document.getElementById('cActive').checked
+            });
+            showToast('Code promo créé.');
+          }
+          couponModal.classList.remove('open');
+          renderCoupons();
+        });
+
+        tbody.addEventListener('click', (e) => {
+          const editBtn = e.target.closest('.btn-edit-coupon');
+          const delBtn = e.target.closest('.btn-delete-coupon');
+          if (editBtn) {
+            const c = adminCoupons.find(x => x.id === parseInt(editBtn.dataset.id, 10));
+            if (c) openForm(c);
+          }
+          if (delBtn) {
+            pendingDeleteId = parseInt(delBtn.dataset.id, 10);
+            const c = adminCoupons.find(x => x.id === pendingDeleteId);
+            document.getElementById('deleteCode').textContent = c ? c.code : '';
+            deleteModal.classList.add('open');
+          }
+        });
+
+        document.getElementById('confirmDelete').addEventListener('click', () => {
+          const idx = adminCoupons.findIndex(c => c.id === pendingDeleteId);
+          if (idx > -1) adminCoupons.splice(idx, 1);
+          showToast('Code promo supprimé.');
+          deleteModal.classList.remove('open');
+          pendingDeleteId = null;
+          renderCoupons();
+        });
+
+        document.getElementById('deleteModalClose').addEventListener('click', () => deleteModal.classList.remove('open'));
+        document.getElementById('cancelDelete').addEventListener('click', () => deleteModal.classList.remove('open'));
+        deleteModal.addEventListener('click', (e) => { if (e.target === deleteModal) deleteModal.classList.remove('open'); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { couponModal.classList.remove('open'); deleteModal.classList.remove('open'); } });
+
+        renderCoupons();
+      });
+    </script>
+
+  </body>
+</html>

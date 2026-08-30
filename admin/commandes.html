@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commandes — PixelStore Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="css/admin.css">
+  </head>
+  <body>
+
+    <script src="js/layout.js"></script>
+    <script src="js/admin.js"></script>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const content = renderAdminLayout('commandes');
+
+        let currentFilter = 'all';
+
+        content.innerHTML = `
+          <div class="page-breadcrumb">
+            <a href="index.html">${ICONS.home} Tableau de bord</a>
+            <span>/</span>
+            <span>Commandes</span>
+          </div>
+
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Commandes</h1>
+              <p class="page-subtitle">Suivez et gérez les commandes de vos clients.</p>
+            </div>
+          </div>
+
+          <div class="kpi-chips">
+            <button class="kpi-chip active" data-filter="all">Toutes <span class="chip-count">${adminOrders.length}</span></button>
+            <button class="kpi-chip" data-filter="pending">En attente</button>
+            <button class="kpi-chip" data-filter="processing">En traitement</button>
+            <button class="kpi-chip" data-filter="shipped">Expédiées</button>
+            <button class="kpi-chip" data-filter="delivered">Livrées</button>
+            <button class="kpi-chip" data-filter="cancelled">Annulées</button>
+          </div>
+
+          <div class="toolbar">
+            <div class="search-input">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="text" id="searchInput" placeholder="Rechercher une commande, un client...">
+            </div>
+            <select class="select-filter" id="paymentFilter">
+              <option value="all">Tous les paiements</option>
+              <option value="paid">Payé</option>
+              <option value="pending">En attente</option>
+              <option value="refunded">Remboursé</option>
+            </select>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>N° commande</th>
+                  <th>Client</th>
+                  <th>Date</th>
+                  <th>Articles</th>
+                  <th>Total</th>
+                  <th>Paiement</th>
+                  <th>Statut</th>
+                  <th style="text-align:right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="ordersBody"></tbody>
+            </table>
+          </div>
+
+          <!-- Modal détail commande -->
+          <div class="modal-backdrop" id="orderModal">
+            <div class="modal">
+              <div class="modal-header">
+                <h3 id="modalTitle">Détail de la commande</h3>
+                <button class="modal-close" id="modalClose" aria-label="Fermer">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              </div>
+              <div id="modalBody"></div>
+            </div>
+          </div>
+        `;
+
+        const tbody = document.getElementById('ordersBody');
+        const searchInput = document.getElementById('searchInput');
+        const paymentFilter = document.getElementById('paymentFilter');
+        const modal = document.getElementById('orderModal');
+
+        function renderOrders() {
+          let list = [...adminOrders].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+          if (currentFilter !== 'all') list = list.filter(o => o.status === currentFilter);
+          const q = searchInput.value.toLowerCase();
+          if (q) {
+            list = list.filter(o => {
+              const c = findCustomer(o.customerId);
+              return o.number.toLowerCase().includes(q) ||
+                (c && c.name.toLowerCase().includes(q));
+            });
+          }
+          const pay = paymentFilter.value;
+          if (pay !== 'all') list = list.filter(o => o.payment === pay);
+
+          if (list.length === 0) {
+            tbody.innerHTML = `
+              <tr><td colspan="8">
+                <div class="empty-state">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line></svg>
+                  <h3>Aucune commande</h3>
+                  <p>Aucune commande ne correspond à ces critères.</p>
+                </div>
+              </td></tr>`;
+            return;
+          }
+
+          tbody.innerHTML = list.map(o => {
+            const c = findCustomer(o.customerId);
+            const st = orderStatusMap[o.status];
+            const pay = paymentStatusMap[o.payment];
+            const nArticles = o.items.reduce((s, i) => s + i.qty, 0);
+            return `
+              <tr>
+                <td class="price-text" style="color:var(--accent-green)">${o.number}</td>
+                <td><strong style="font-size:0.88rem">${c ? c.name : '—'}</strong><br><span style="font-size:0.76rem;color:var(--text-secondary)">${c ? c.email : ''}</span></td>
+                <td style="color:var(--text-secondary)">${formatDate(o.date)}</td>
+                <td>${nArticles} article(s)</td>
+                <td class="price-text">${formatPrice(o.total)}</td>
+                <td><span class="badge ${pay.badge}">${pay.label}</span></td>
+                <td><span class="badge ${st.badge}">${st.label}</span></td>
+                <td><button class="btn btn-secondary btn-sm btn-view" data-id="${o.id}">Détails</button></td>
+              </tr>
+            `;
+          }).join('');
+        }
+
+        function openOrderModal(order) {
+          const c = findCustomer(order.customerId);
+          const st = orderStatusMap[order.status];
+          const pay = paymentStatusMap[order.payment];
+
+          const statusOptions = Object.keys(orderStatusMap)
+            .filter(s => s !== 'confirmed')
+            .map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${orderStatusMap[s].label}</option>`)
+            .join('');
+
+          document.getElementById('modalTitle').textContent = 'Détail — ' + order.number;
+          document.getElementById('modalBody').innerHTML = `
+            <div class="detail-panel">
+              <div class="card" style="margin-bottom:16px">
+                <div class="card-header">
+                  <h4 style="font-size:0.9rem">Changement de statut</h4>
+                </div>
+                <div style="display:flex;gap:12px;align-items:flex-end">
+                  <div class="form-group" style="flex:1">
+                    <label>Statut de la commande</label>
+                    <select id="orderStatusSelect">${statusOptions}</select>
+                  </div>
+                  <button class="btn btn-primary btn-sm" id="updateStatusBtn">Mettre à jour</button>
+                </div>
+              </div>
+
+              <div class="card" style="margin-bottom:16px">
+                <div class="card-header"><h4>Informations client</h4></div>
+                <div style="display:flex;gap:14px;align-items:center">
+                  <div class="aside-row" style="border:none;padding:0">
+                    <div class="customer-avatar">${c ? initials(c.name) : '?'}</div>
+                    <div>
+                      <p><strong>${c ? c.name : 'Client'}</strong></p>
+                      <span>${c ? c.email : '—'}${c && c.phone ? ' • ' + c.phone : ''}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="detail-section">
+                  <div style="display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between">
+                    <div><strong style="font-size:0.8rem;color:var(--text-secondary)">Paiement</strong><br><span class="badge ${pay.badge}">${pay.label}</span></div>
+                    <div><strong style="font-size:0.8rem;color:var(--text-secondary)">Méthode</strong><br><span style="text-transform:capitalize">${order.method.replace('_', ' ')}</span></div>
+                    <div><strong style="font-size:0.8rem;color:var(--text-secondary)">Date</strong><br><span>${formatDateTime(order.date)}</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-header"><h4>Articles commandés</h4></div>
+                <div class="table-wrapper" style="border:none">
+                  <table class="admin-table">
+                    <thead><tr><th>Produit</th><th>Qté</th><th>Prix</th><th style="text-align:right">Sous-total</th></tr></thead>
+                    <tbody>
+                      ${order.items.map(i => `
+                        <tr>
+                          <td>${i.name}</td>
+                          <td>${i.qty}</td>
+                          <td>${formatPrice(i.price)}</td>
+                          <td style="text-align:right" class="price-text">${formatPrice(i.price * i.qty)}</td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px;margin-left:auto;max-width:280px">
+                  <div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">Sous-total</span><span>${formatPrice(order.subtotal)}</span></div>
+                  <div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">Livraison</span><span>${formatPrice(order.shipping)}</span></div>
+                  <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border-color);padding-top:8px"><strong>Total</strong><strong class="price-text">${formatPrice(order.total)}</strong></div>
+                </div>
+              </div>
+            </div>
+          `;
+
+          modal.classList.add('open');
+
+          document.getElementById('updateStatusBtn').addEventListener('click', () => {
+            const newStatus = document.getElementById('orderStatusSelect').value;
+            order.status = newStatus;
+            showToast('Statut de la commande mis à jour.');
+            modal.classList.remove('open');
+            renderOrders();
+            const p = document.getElementById('orderStatusSelect');
+            if (p) p.remove();
+          });
+        }
+
+        // Événements
+        tbody.addEventListener('click', (e) => {
+          const btn = e.target.closest('.btn-view');
+          if (!btn) return;
+          const order = adminOrders.find(o => o.id === parseInt(btn.dataset.id, 10));
+          if (order) openOrderModal(order);
+        });
+
+        searchInput.addEventListener('input', renderOrders);
+        paymentFilter.addEventListener('change', renderOrders);
+
+        content.querySelectorAll('.kpi-chip').forEach(chip => {
+          chip.addEventListener('click', () => {
+            content.querySelectorAll('.kpi-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            currentFilter = chip.dataset.filter;
+            renderOrders();
+          });
+        });
+
+        document.getElementById('modalClose').addEventListener('click', () => modal.classList.remove('open'));
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') modal.classList.remove('open'); });
+
+        renderOrders();
+      });
+    </script>
+
+  </body>
+</html>

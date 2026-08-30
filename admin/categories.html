@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catégories — PixelStore Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="css/admin.css">
+  </head>
+  <body>
+
+    <script src="js/layout.js"></script>
+    <script src="js/admin.js"></script>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const content = renderAdminLayout('categories');
+
+        content.innerHTML = `
+          <div class="page-breadcrumb">
+            <a href="index.html">${ICONS.home} Tableau de bord</a>
+            <span>/</span>
+            <span>Catégories</span>
+          </div>
+
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Catégories</h1>
+              <p class="page-subtitle">Organisez votre catalogue en catégories et sous-catégories.</p>
+            </div>
+            <button class="btn btn-primary" id="addCategoryBtn">+ Nouvelle catégorie</button>
+          </div>
+
+          <div class="dashboard-grid" style="grid-template-columns:1fr 1fr;align-items:start">
+            <!-- Liste des catégories -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Catégories existantes</h3>
+              </div>
+              <div id="categoriesList"></div>
+            </div>
+
+            <!-- Formulaire -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title" id="formTitle">Ajouter une catégorie</h3>
+              </div>
+              <form id="categoryForm">
+                <div class="form-group" style="margin-bottom:14px">
+                  <label for="cName">Nom de la catégorie <span class="required">*</span></label>
+                  <input type="text" id="cName" placeholder="Ex : Composants">
+                </div>
+                <div class="form-group" style="margin-bottom:14px">
+                  <label for="cSlug">Slug <span class="hint">auto-généré si vide</span></label>
+                  <input type="text" id="cSlug" placeholder="composants">
+                </div>
+                <div class="form-group" style="margin-bottom:18px">
+                  <label for="cParent">Catégorie parente <span class="hint">optionnel</span></label>
+                  <select id="cParent">
+                    <option value="">Aucune (catégorie racine)</option>
+                    ${adminCategories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                  </select>
+                </div>
+                <div class="form-actions" style="margin-top:0;padding-top:0;border:none">
+                  <button type="submit" class="btn btn-primary" id="saveCategoryBtn">Ajouter la catégorie</button>
+                  <button type="button" class="btn btn-ghost" id="cancelEditBtn" style="display:none">Annuler</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Modal confirmation suppression -->
+          <div class="modal-backdrop" id="deleteModal">
+            <div class="modal">
+              <div class="modal-header">
+                <h3>Supprimer la catégorie</h3>
+                <button class="modal-close" id="deleteModalClose" aria-label="Fermer">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              </div>
+              <p style="font-size:0.92rem;color:var(--text-secondary)">Voulez-vous vraiment supprimer <strong id="deleteName" style="color:var(--text-primary)"></strong> ? Cette action est irréversible.</p>
+              <div class="modal-footer">
+                <button class="btn btn-ghost" id="cancelDelete">Annuler</button>
+                <button class="btn btn-danger" id="confirmDelete">Supprimer</button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        const listEl = document.getElementById('categoriesList');
+        const deleteModal = document.getElementById('deleteModal');
+        let editingId = null;
+        let pendingDeleteId = null;
+
+        function renderCategories() {
+          listEl.innerHTML = adminCategories.map(c => {
+            const count = adminProducts.filter(p => p.category === c.slug).length;
+            return `
+              <div class="status-item">
+                <span class="status-dot dot-green"></span>
+                <div style="flex:1">
+                  <strong style="font-size:0.9rem">${c.name}</strong>
+                  <span style="font-size:0.78rem;color:var(--text-secondary)">${count} produit(s)</span>
+                </div>
+                <button class="btn btn-secondary btn-icon btn-edit-cat" data-id="${c.id}" title="Modifier">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"></path></svg>
+                </button>
+                <button class="btn btn-danger btn-icon btn-delete-cat" data-id="${c.id}" title="Supprimer">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+              </div>
+            `;
+          }).join('') || '<div class="empty-state"><p>Aucune catégorie.</p></div>';
+        }
+
+        // Form title d'édition
+        function fillForm(cat) {
+          editingId = cat.id;
+          document.getElementById('formTitle').textContent = 'Modifier la catégorie';
+          document.getElementById('cName').value = cat.name;
+          document.getElementById('cSlug').value = cat.slug;
+          document.getElementById('saveCategoryBtn').textContent = 'Enregistrer les modifications';
+          document.getElementById('cancelEditBtn').style.display = 'inline-flex';
+          const parentSelect = document.getElementById('cParent');
+          parentSelect.innerHTML = '<option value="">Aucune (catégorie racine)</option>' +
+            adminCategories.filter(c => c.id !== cat.id).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        }
+
+        document.getElementById('addCategoryBtn').addEventListener('click', () => {
+          editingId = null;
+          document.getElementById('formTitle').textContent = 'Ajouter une catégorie';
+          document.getElementById('cName').value = '';
+          document.getElementById('cSlug').value = '';
+          document.getElementById('saveCategoryBtn').textContent = 'Ajouter la catégorie';
+          document.getElementById('cancelEditBtn').style.display = 'none';
+          const parentSelect = document.getElementById('cParent');
+          parentSelect.innerHTML = '<option value="">Aucune (catégorie racine)</option>' +
+            adminCategories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        });
+
+        document.getElementById('categoryForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const name = document.getElementById('cName').value.trim();
+          if (!name) { showToast('Le nom de la catégorie est obligatoire.', 'error'); return; }
+          const slug = document.getElementById('cSlug').value.trim() || slugify(name);
+
+          if (editingId) {
+            const cat = adminCategories.find(c => c.id === editingId);
+            if (cat) { cat.name = name; cat.slug = slug; }
+            showToast('Catégorie mise à jour.');
+          } else {
+            adminCategories.push({ id: Math.max(...adminCategories.map(c => c.id)) + 1, name, slug, count: 0 });
+            showToast('Catégorie créée.');
+          }
+          editingId = null;
+          document.getElementById('addCategoryBtn').click();
+          renderCategories();
+        });
+
+        listEl.addEventListener('click', (e) => {
+          const editBtn = e.target.closest('.btn-edit-cat');
+          const delBtn = e.target.closest('.btn-delete-cat');
+          if (editBtn) {
+            const cat = adminCategories.find(c => c.id === parseInt(editBtn.dataset.id, 10));
+            if (cat) fillForm(cat);
+          }
+          if (delBtn) {
+            pendingDeleteId = parseInt(delBtn.dataset.id, 10);
+            const cat = adminCategories.find(c => c.id === pendingDeleteId);
+            document.getElementById('deleteName').textContent = cat ? cat.name : '';
+            deleteModal.classList.add('open');
+          }
+        });
+
+        document.getElementById('confirmDelete').addEventListener('click', () => {
+          const idx = adminCategories.findIndex(c => c.id === pendingDeleteId);
+          if (idx > -1) adminCategories.splice(idx, 1);
+          showToast('Catégorie supprimée.');
+          deleteModal.classList.remove('open');
+          pendingDeleteId = null;
+          renderCategories();
+        });
+
+        document.getElementById('cancelEditBtn').addEventListener('click', () => document.getElementById('addCategoryBtn').click());
+        document.getElementById('deleteModalClose').addEventListener('click', () => deleteModal.classList.remove('open'));
+        document.getElementById('cancelDelete').addEventListener('click', () => deleteModal.classList.remove('open'));
+        deleteModal.addEventListener('click', (e) => { if (e.target === deleteModal) deleteModal.classList.remove('open'); });
+
+        renderCategories();
+      });
+    </script>
+
+  </body>
+</html>

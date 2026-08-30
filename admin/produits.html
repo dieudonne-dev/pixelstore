@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produits — PixelStore Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="css/admin.css">
+  </head>
+  <body>
+
+    <script src="js/layout.js"></script>
+    <script src="js/admin.js"></script>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const content = renderAdminLayout('produits');
+
+        // ---- Détermine si on vient du dashboard / recherche globale ----
+        const params = new URLSearchParams(window.location.search);
+        let currentSearch = params.get('q') || '';
+        let currentCategory = 'all';
+        let currentStatus = 'all';
+
+        content.innerHTML = `
+          <div class="page-breadcrumb">
+            <a href="index.html">${ICONS.home} Tableau de bord</a>
+            <span>/</span>
+            <span>Produits</span>
+          </div>
+
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Produits</h1>
+              <p class="page-subtitle">Gérez votre catalogue de ${adminProducts.length} produits.</p>
+            </div>
+            <a href="produit-form.html" class="btn btn-primary">+ Ajouter un produit</a>
+          </div>
+
+          <div class="kpi-chips">
+            <button class="kpi-chip active" data-filter="all">Tous <span class="chip-count">${adminProducts.length}</span></button>
+            <button class="kpi-chip" data-filter="active">Actifs</button>
+            <button class="kpi-chip" data-filter="inactive">Inactifs</button>
+            <button class="kpi-chip" data-filter="lowstock">Stock faible</button>
+            <button class="kpi-chip" data-filter="featured">Mis en avant</button>
+          </div>
+
+          <div class="toolbar">
+            <div class="search-input">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="text" id="searchInput" placeholder="Rechercher un produit..." value="${currentSearch}">
+            </div>
+            <select class="select-filter" id="categoryFilter">
+              <option value="all">Toutes les catégories</option>
+              ${adminCategories.map(c => `<option value="${c.slug}">${c.name}</option>`).join('')}
+            </select>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Produit</th>
+                  <th>Catégorie</th>
+                  <th>Prix</th>
+                  <th>Stock</th>
+                  <th>Note</th>
+                  <th>Statut</th>
+                  <th style="text-align:right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="productsBody"></tbody>
+            </table>
+          </div>
+
+          <div class="pagination" id="pagination"></div>
+        `;
+
+        // Références
+        const tbody = document.getElementById('productsBody');
+        const searchInput = document.getElementById('searchInput');
+        const categoryFilter = document.getElementById('categoryFilter');
+
+        // ---- Fonction de rendu ----
+        function renderProducts() {
+          let list = adminProducts;
+
+          if (currentSearch) {
+            const q = currentSearch.toLowerCase();
+            list = list.filter(p =>
+              p.name.toLowerCase().includes(q) ||
+              p.reference.toLowerCase().includes(q) ||
+              p.brand.toLowerCase().includes(q)
+            );
+          }
+          if (currentCategory !== 'all') list = list.filter(p => p.category === currentCategory);
+          if (currentStatus === 'active') list = list.filter(p => p.active);
+          if (currentStatus === 'inactive') list = list.filter(p => !p.active);
+          if (currentStatus === 'lowstock') list = list.filter(p => p.stock <= 10);
+          if (currentStatus === 'featured') list = list.filter(p => p.featured);
+
+          if (list.length === 0) {
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="7">
+                  <div class="empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <h3>Aucun produit trouvé</h3>
+                    <p>Essayez de modifier votre recherche ou vos filtres.</p>
+                  </div>
+                </td>
+              </tr>
+            `;
+            document.getElementById('pagination').innerHTML = '';
+            return;
+          }
+
+          tbody.innerHTML = list.map(p => {
+            const cat = adminCategories.find(c => c.slug === p.category);
+            return `
+              <tr>
+                <td>
+                  <div class="table-product">
+                    <img src="${p.image}" alt="${p.name}">
+                    <div>
+                      <strong>${p.name}</strong>
+                      <span>${p.reference}</span>
+                    </div>
+                  </div>
+                </td>
+                <td>${cat ? cat.name : p.category}</td>
+                <td class="price-text">${formatPrice(p.price)}</td>
+                <td>
+                  <span class="badge ${p.stock <= 5 ? 'badge-red' : p.stock <= 10 ? 'badge-amber' : 'badge-green'}">${p.stock} ${p.stock <= 1 ? 'u.' : 'u.'}</span>
+                </td>
+                <td>★ ${p.rating}</td>
+                <td>
+                  ${p.active
+                    ? (p.featured ? '<span class="badge badge-violet">Mis en avant</span>' : '<span class="badge badge-green">Actif</span>')
+                    : '<span class="badge badge-gray">Inactif</span>'}
+                </td>
+                <td>
+                  <div style="display:flex;gap:6px;justify-content:flex-end">
+                    <a href="produit-form.html?id=${p.id}" class="btn btn-secondary btn-icon" title="Modifier" aria-label="Modifier">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"></path></svg>
+                    </a>
+                    <button class="btn btn-danger btn-icon btn-delete" data-id="${p.id}" title="Supprimer" aria-label="Supprimer">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
+
+        // ---- Événements ----
+        searchInput.addEventListener('input', (e) => {
+          currentSearch = e.target.value;
+          renderProducts();
+        });
+
+        categoryFilter.addEventListener('change', (e) => {
+          currentCategory = e.target.value;
+          renderProducts();
+        });
+
+        content.querySelectorAll('.kpi-chip').forEach(chip => {
+          chip.addEventListener('click', () => {
+            content.querySelectorAll('.kpi-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            currentStatus = chip.dataset.filter;
+            renderProducts();
+          });
+        });
+
+        // Suppression (démo : on utilise une fenêtre de confirmation native)
+        tbody.addEventListener('click', (e) => {
+          const btn = e.target.closest('.btn-delete');
+          if (!btn) return;
+          const id = parseInt(btn.dataset.id, 10);
+          const prod = findProduct(id);
+          if (prod && confirm(`Supprimer le produit « ${prod.name} » ?`)) {
+            const idx = adminProducts.findIndex(p => p.id === id);
+            if (idx > -1) adminProducts.splice(idx, 1);
+            saveAdminProducts();
+            showToast('Produit supprimé avec succès.');
+            renderProducts();
+          }
+        });
+
+        renderProducts();
+      });
+    </script>
+
+  </body>
+</html>
