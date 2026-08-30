@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panier - PixelStore</title>
+  <title>Mes commandes - PixelStore</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/panier.css">
+  <link rel="stylesheet" href="css/commandes.css">
   <link rel="stylesheet" href="css/auth.css">
 </head>
 <body>
@@ -54,7 +54,7 @@
           </svg>
         </a>
 
-        <a href="panier.html" class="icon-btn cart-btn active" aria-label="Panier">
+        <a href="panier.html" class="icon-btn cart-btn" aria-label="Panier">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="9" cy="21" r="1"></circle>
             <circle cx="20" cy="21" r="1"></circle>
@@ -77,7 +77,6 @@
           <li><a href="index.html" class="nav-link">Accueil</a></li>
           <li><a href="catalogue.html" class="nav-link">Catalogue</a></li>
           <li><a href="index.html#categories" class="nav-link">Catégories</a></li>
-          <li><a href="catalogue.html" class="nav-link">Catégories</a></li>
           <li><a href="index.html#contact" class="nav-link">Contact</a></li>
         </ul>
       </div>
@@ -89,62 +88,42 @@
   <!-- ==================== EN-TÊTE DE PAGE ==================== -->
   <section class="page-header">
     <div class="container">
-      <span class="breadcrumb"><a href="index.html">Accueil</a> / <span>Panier</span></span>
-      <h1 class="page-title">Mon Panier</h1>
+      <span class="breadcrumb"><a href="index.html">Accueil</a> / <span>Mes commandes</span></span>
+      <h1 class="page-title">Mes commandes</h1>
     </div>
   </section>
   <!-- ==================== FIN EN-TÊTE ==================== -->
 
-  <!-- ==================== PANIER PRINCIPAL ==================== -->
-  <section class="cart-section">
+  <!-- ==================== COMMANDES ==================== -->
+  <section class="orders-section">
     <div class="container">
 
-      <!-- État : panier avec articles -->
-      <div class="cart-layout" id="cart-layout">
-
-        <!-- Liste des articles -->
-        <div class="cart-items" id="cart-items">
-          <!-- Généré dynamiquement par cart.js -->
-        </div>
-
-        <!-- Résumé de commande -->
-        <div class="cart-summary">
-          <h3>Résumé de la commande</h3>
-
-          <div class="summary-row">
-            <span>Sous-total</span>
-            <span id="summary-subtotal">0 BIF</span>
-          </div>
-          <div class="summary-row">
-            <span>Livraison</span>
-            <span id="summary-shipping">5 000 BIF</span>
-          </div>
-          <div class="summary-row summary-total">
-            <span>Total</span>
-            <span id="summary-total">0 BIF</span>
-          </div>
-
-          <a href="checkout.html" class="btn btn-primary btn-full">Passer la commande</a>
-          <a href="catalogue.html" class="continue-shopping">← Continuer mes achats</a>
-        </div>
-
+      <div id="orders-required" class="orders-required" style="display:none;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <h3>Connectez-vous pour voir vos commandes</h3>
+        <p>Veuillez vous connecter à votre compte pour consulter l'historique de vos commandes.</p>
+        <button class="btn btn-primary" id="orders-login-btn">Se connecter</button>
       </div>
 
-      <!-- État : panier vide (caché par défaut) -->
-      <div class="cart-empty" id="cart-empty" style="display: none;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="9" cy="21" r="1"></circle>
-          <circle cx="20" cy="21" r="1"></circle>
-          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+      <div id="orders-list" class="orders-list" style="display:none;"></div>
+
+      <div id="orders-empty" class="orders-empty" style="display:none;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+          <line x1="12" y1="22.08" x2="12" y2="12"/>
         </svg>
-        <h3>Votre panier est vide</h3>
-        <p>Découvrez notre catalogue et trouvez le matériel qu'il vous faut.</p>
+        <h3>Aucune commande pour le moment</h3>
+        <p>Vos commandes apparaîtront ici après votre premier achat.</p>
         <a href="catalogue.html" class="btn btn-primary">Voir le catalogue</a>
       </div>
 
     </div>
   </section>
-  <!-- ==================== FIN PANIER ==================== -->
+  <!-- ==================== FIN COMMANDES ==================== -->
 
   <!-- ==================== FOOTER ==================== -->
   <footer class="footer">
@@ -154,7 +133,7 @@
           <a href="index.html">Pixel<span class="logo-accent">Store</span></a>
         </div>
         <p class="footer-description">
-          Votre destination pour du matériel informatique de qualité, 
+          Votre destination pour du matériel informatique de qualité,
           sélectionné avec soin, au meilleur prix.
         </p>
       </div>
@@ -182,6 +161,7 @@
   <script src="js/api.js"></script>
   <script src="js/cart.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/commandes.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

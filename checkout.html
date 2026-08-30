@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Commande - PixelStore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/panier.css">
+  <link rel="stylesheet" href="css/checkout.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="header">
+    <div class="container header-container">
+
+      <div class="logo">
+        <a href="index.html">Pixel<span class="logo-accent">Store</span></a>
+      </div>
+
+      <nav class="nav">
+        <ul class="nav-list">
+          <li><a href="index.html" class="nav-link">Accueil</a></li>
+          <li><a href="catalogue.html" class="nav-link">Catalogue</a></li>
+          <li><a href="index.html#categories" class="nav-link">Catégories</a></li>
+          <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+        </ul>
+      </nav>
+
+      <div class="header-actions">
+        <button class="icon-btn" id="theme-toggle" aria-label="Changer de thème">
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+
+        <a href="#" class="icon-btn" aria-label="Liste de souhaits">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </a>
+
+        <a href="panier.html" class="icon-btn cart-btn" aria-label="Panier">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+          <span class="cart-badge" id="cart-count">0</span>
+        </a>
+
+        <button class="icon-btn mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="mobile-nav" id="mobile-nav">
+        <ul>
+          <li><a href="index.html" class="nav-link">Accueil</a></li>
+          <li><a href="catalogue.html" class="nav-link">Catalogue</a></li>
+          <li><a href="index.html#categories" class="nav-link">Catégories</a></li>
+          <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+        </ul>
+      </div>
+
+    </div>
+  </header>
+  <!-- ==================== FIN HEADER ==================== -->
+
+  <!-- ==================== EN-TÊTE DE PAGE ==================== -->
+  <section class="page-header">
+    <div class="container">
+      <span class="breadcrumb"><a href="index.html">Accueil</a> / <a href="panier.html">Panier</a> / <span>Commande</span></span>
+      <h1 class="page-title">Finaliser la commande</h1>
+    </div>
+  </section>
+  <!-- ==================== FIN EN-TÊTE ==================== -->
+
+  <!-- ==================== CHECKOUT PRINCIPAL ==================== -->
+  <section class="checkout-section">
+    <div class="container">
+
+      <!-- État : aucun article dans le panier -->
+      <div id="checkout-empty" style="display: none;">
+        <div class="cart-empty">
+          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+          <h3>Votre panier est vide</h3>
+          <p>Ajoutez des articles avant de passer commande.</p>
+          <a href="catalogue.html" class="btn btn-primary">Voir le catalogue</a>
+        </div>
+      </div>
+
+      <!-- Formulaire de commande (masqué si panier vide ou succès) -->
+      <div id="checkout-layout">
+        <div class="checkout-layout">
+
+          <!-- Colonne formulaire -->
+          <div class="checkout-form-col">
+
+            <div class="checkout-guest-notice" id="guest-notice" style="display: none;">
+              <strong>Connectez-vous pour passer commande.</strong><br>
+              Vous devez être connecté à votre compte PixelStore pour enregistrer votre commande.
+            </div>
+
+            <div class="checkout-error" id="checkout-error"></div>
+
+            <!-- 1. Contact -->
+            <div class="checkout-form-card">
+              <h3><span class="checkout-step-num">1</span> Contact</h3>
+              <p class="form-card-desc">Vos coordonnées pour être tenu au courant du suivi.</p>
+              <div class="checkout-form">
+                <div class="auth-field field-full" style="margin-bottom:0;">
+                  <label>Email (compte connecté)</label>
+                  <input type="email" id="co-email" readonly>
+                </div>
+                <div class="auth-field field-full" style="margin-bottom:0;">
+                  <label>Téléphone <span class="req">*</span></label>
+                  <input type="tel" id="co-phone" placeholder="+257 00 00 00 00">
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Adresse de livraison -->
+            <div class="checkout-form-card">
+              <h3><span class="checkout-step-num">2</span> Livraison</h3>
+              <p class="form-card-desc">Où doit-on livrer votre commande ?</p>
+              <div class="checkout-form">
+                <div class="field-full"><label>Adresse <span class="req">*</span></label><input id="ship-line1" placeholder="Avenue, quartier, B.P."></div>
+                <div class="field-full"><label>Complément (optionnel)</label><input id="ship-line2" placeholder="Étage, bâtiment, repère"></div>
+                <div><label>Ville <span class="req">*</span></label><input id="ship-city" placeholder="Bujumbura"></div>
+                <div><label>Province</label><input id="ship-province" placeholder="Bujumbura Mairie"></div>
+                <div class="field-full"><label>Pays</label><input id="ship-country" value="Burundi" readonly></div>
+                <div class="field-full"><label>Instructions (optionnel)</label><textarea id="ship-notes" placeholder="Précisions pour le livreur…"></textarea></div>
+              </div>
+            </div>
+
+            <!-- 3. Paiement -->
+            <div class="checkout-form-card">
+              <h3><span class="checkout-step-num">3</span> Paiement</h3>
+              <p class="form-card-desc">Choisissez votre moyen de paiement.</p>
+              <div class="payment-options" id="payment-options">
+                <label class="payment-option selected">
+                  <input type="radio" name="payment" value="cod" checked>
+                  <span class="po-title"><span class="po-radio"></span> Paiement à la livraison</span>
+                  <span class="po-desc">Payez en espèces à la réception.</span>
+                </label>
+                <label class="payment-option">
+                  <input type="radio" name="payment" value="mobile_money">
+                  <span class="po-title"><span class="po-radio"></span> Mobile Money</span>
+                  <span class="po-desc">Lumicash / M-Pesa / EcoCash.</span>
+                </label>
+                <label class="payment-option">
+                  <input type="radio" name="payment" value="bank_transfer">
+                  <span class="po-title"><span class="po-radio"></span> Virement bancaire</span>
+                  <span class="po-desc">Transfert sur notre compte.</span>
+                </label>
+                <label class="payment-option">
+                  <input type="radio" name="payment" value="card">
+                  <span class="po-title"><span class="po-radio"></span> Carte bancaire</span>
+                  <span class="po-desc">Visa / Mastercard.</span>
+                </label>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Colonne résumé -->
+          <aside>
+            <div class="checkout-summary">
+              <h3>Récapitulatif</h3>
+              <div class="checkout-items" id="checkout-items"></div>
+              <div class="checkout-coupon">
+                <input id="coupon-input" placeholder="Code promo">
+                <button type="button" id="coupon-apply">OK</button>
+              </div>
+              <div class="coupon-msg" id="coupon-msg"></div>
+              <div class="summary-row"><span>Sous-total</span><span id="co-subtotal">0 BIF</span></div>
+              <div class="summary-row" id="co-discount-row" style="display:none;"><span>Remise</span><span id="co-discount">0 BIF</span></div>
+              <div class="summary-row"><span>Livraison</span><span id="co-shipping">5 000 BIF</span></div>
+              <div class="summary-row summary-total"><span>Total</span><span id="co-total">0 BIF</span></div>
+              <button class="btn btn-primary btn-full" id="place-order-btn" style="margin-top:18px;">Confirmer la commande</button>
+              <a href="panier.html" class="continue-shopping" style="margin-top:12px;">← Retour au panier</a>
+            </div>
+          </aside>
+
+        </div>
+      </div>
+
+      <!-- État : commande réussie -->
+      <div id="checkout-success" style="display: none;">
+        <div class="order-success">
+          <div class="ok-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <h2>Commande confirmée !</h2>
+          <p>Merci pour votre achat. Votre commande a bien été enregistrée.</p>
+          <div class="order-number" id="success-order-number"></div>
+          <p style="font-size:13px;">Nous vous contacterons rapidement pour le paiement et la livraison.</p>
+          <a href="catalogue.html" class="btn btn-primary">Continuer mes achats</a>
+          <a href="commandes.html" class="btn btn-secondary">Voir mes commandes</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+  <!-- ==================== FIN CHECKOUT ==================== -->
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="footer">
+    <div class="container footer-container">
+      <div class="footer-col footer-brand">
+        <div class="logo footer-logo">
+          <a href="index.html">Pixel<span class="logo-accent">Store</span></a>
+        </div>
+        <p class="footer-description">
+          Votre destination pour du matériel informatique de qualité,
+          sélectionné avec soin, au meilleur prix.
+        </p>
+      </div>
+      <div class="footer-col">
+        <h4>Navigation</h4>
+        <ul class="footer-links">
+          <li><a href="index.html">Accueil</a></li>
+          <li><a href="catalogue.html">Catalogue</a></li>
+          <li><a href="catalogue.html">Catégories</a></li>
+          <li><a href="index.html#contact">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container footer-bottom-container">
+        <p>&copy; 2026 PixelStore. Tous droits réservés.</p>
+      </div>
+    </div>
+  </footer>
+  <!-- ==================== FIN FOOTER ==================== -->
+
+  <!-- ==================== SCRIPTS ==================== -->
+  <script src="js/products.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/checkout.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

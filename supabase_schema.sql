@@ -46,8 +46,16 @@ SECURITY DEFINER
 AS $$
 BEGIN
   INSERT INTO public.users (id, email, first_name, last_name)
-  VALUES (NEW.id, NEW.email, coalesce(NEW.raw_user_meta_data->>'first_name',''),
-          coalesce(NEW.raw_user_meta_data->>'last_name',''));
+  SELECT NEW.id, NEW.email,
+         coalesce(NULLIF(NEW.raw_user_meta_data->>'first_name',''),
+                  NULLIF(split_part(coalesce(NEW.raw_user_meta_data->>'full_name',''), ' ', 1), ''),
+                  ''),
+         coalesce(NULLIF(NEW.raw_user_meta_data->>'last_name',''),
+                  CASE WHEN position(' ' in coalesce(NEW.raw_user_meta_data->>'full_name','')) > 0
+                       THEN substr(coalesce(NEW.raw_user_meta_data->>'full_name',''),
+                                   position(' ' in coalesce(NEW.raw_user_meta_data->>'full_name','')) + 1)
+                       ELSE '' END,
+                  '');
   RETURN NEW;
 END;
 $$;
@@ -397,10 +405,13 @@ CREATE OR REPLACE FUNCTION public.create_order(
   p_payment_method text,
   p_coupon_code text DEFAULT NULL,
   p_shipping_address_id uuid DEFAULT NULL,
-  p_billing_address_id uuid DEFAULT NULL
+  p_billing_address_id uuid DEFAULT NULL,
+  p_notes text DEFAULT NULL
 )
-RETURNS TABLE(order_id uuid, subtotal numeric, discount_total numeric, grand_total numeric)
+RETURNS TABLE(order_id uuid, order_number text, subtotal numeric, discount_total numeric, grand_total numeric)
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
   v_cart_id        uuid;
@@ -430,11 +441,11 @@ BEGIN
   END IF;
 
   INSERT INTO public.orders (order_number, user_id, coupon_id, payment_method,
-                             shipping_address_id, billing_address_id)
+                             shipping_address_id, billing_address_id, customer_notes)
   VALUES ('PS-' || to_char(now(),'YYYYMMDD') || '-' ||
           lpad((floor(random()*99999))::text, 5, '0'),
           auth.uid(), v_coupon_id, p_payment_method,
-          p_shipping_address_id, p_billing_address_id)
+          p_shipping_address_id, p_billing_address_id, p_notes)
   RETURNING id INTO v_order_id;
 
   FOR v_item IN
@@ -484,7 +495,9 @@ BEGIN
 
   DELETE FROM public.cart_items WHERE cart_id = v_cart_id;
 
-  RETURN QUERY SELECT v_order_id, v_subtotal, v_discount, v_subtotal - v_discount + 5000;
+  RETURN QUERY SELECT v_order_id,
+    (SELECT o.order_number FROM public.orders o WHERE o.id = v_order_id),
+    v_subtotal, v_discount, v_subtotal - v_discount + 5000;
 END;
 $$;
 
@@ -601,6 +614,14 @@ CREATE POLICY coupons_write ON public.coupons FOR ALL USING (public.is_admin()) 
 DROP POLICY IF EXISTS osh_read ON public.order_status_history;
 CREATE POLICY osh_read ON public.order_status_history FOR SELECT
   USING (order_id IN (SELECT id FROM public.orders WHERE user_id = auth.uid() OR public.is_admin()));
+
+-- ============================================================
+-- EXÉCUTION DES FONCTIONS (rôles anon / authenticated)
+-- create_order est SECURITY DEFINER : il tourne avec les droits du
+-- propriétaire (contourne la RLS) mais vérifie auth.uid() en interne,
+-- ce qui garantit qu'un utilisateur ne peut agir que sur SA commande.
+-- ============================================================
+GRANT EXECUTE ON FUNCTION public.create_order(text, text, uuid, uuid, text) TO anon, authenticated;
 
 -- ============================================================
 -- DONNÉES DE DÉMONSTRATION (alignées sur data.js + products.js)

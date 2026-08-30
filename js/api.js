@@ -207,3 +207,94 @@ async function getCurrentUser() {
   }
   return null;
 }
+
+// ==========================================================================
+// PANIER EN BASE (carts / cart_items) — utilisé quand un utilisateur est
+// connecté. Le panier "localStorage" (cart.js) reste la source d'entrée ;
+// on le synchronise vers la base pour que create_order puisse le lire.
+// Toutes ces fonctions échouent silencieusement si personne n'est connecté
+// (aucune erreur ne bloque le site).
+// ==========================================================================
+
+// Renvoie l'id du panier de l'utilisateur connecté, en le créant si besoin.
+async function getOrCreateCart() {
+  const user = await getCurrentUser();
+  if (!user) return null;
+  const client = await waitForSupabase();
+  if (!client) return null;
+
+  // Tente de récupérer le panier existant.
+  const { data: existing } = await client
+    .from('carts')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (existing && existing.id) return existing.id;
+
+  // Sinon, on en crée un (la colonne user_id est UNIQUE, RLS autorise).
+  const { data, error } = await client
+    .from('carts')
+    .insert({ user_id: user.id })
+    .select('id')
+    .single();
+  if (error || !data) return null;
+  return data.id;
+}
+
+// Synchronise le panier localStorage vers la base (upsert des lignes).
+async function syncCartToDb() {
+  const user = await getCurrentUser();
+  if (!user) return;
+  const cartId = await getOrCreateCart();
+  if (!cartId) return;
+
+  let cart = [];
+  try { cart = JSON.parse(localStorage.getItem('pixelstore_cart') || '[]'); } catch (e) { cart = []; }
+  if (!cart.length) return;
+
+  const client = await waitForSupabase();
+  if (!client) return;
+
+  const rows = cart.map((item) => ({
+    cart_id: cartId,
+    product_id: Number(item.id),
+    quantity: Number(item.quantity) || 1
+  }));
+
+  await client
+    .from('cart_items')
+    .upsert(rows, { onConflict: 'cart_id,product_id' });
+}
+
+// Charge le panier depuis la base (pour restaurer un panier après connexion).
+async function loadCartFromDb() {
+  const user = await getCurrentUser();
+  if (!user) return null;
+  const client = await waitForSupabase();
+  if (!client) return null;
+
+  const { data, error } = await client
+    .from('cart_items')
+    .select('product_id, quantity')
+    .eq('cart_id', (await getOrCreateCart()) || '__none__');
+  if (error || !Array.isArray(data)) return null;
+
+  // Enrichit chaque ligne avec les infos produit nécessaires au panier.
+  const detail = await getCatalogProducts();
+  const byId = {};
+  (detail || []).forEach((p) => { byId[p.id] = p; });
+
+  return data
+    .map((row) => {
+      const p = byId[Number(row.product_id)];
+      if (!p) return null;
+      return {
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        image: p.image,
+        quantity: Number(row.quantity) || 1
+      };
+    })
+    .filter(Boolean);
+}
