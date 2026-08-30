@@ -2,7 +2,7 @@
 // Charge le produit depuis l'URL (?id=...), affiche toutes les informations,
 // le certificat, la quantité disponible, et permet l'ajout au panier.
 
-(function () {
+(async function () {
   // ---------- Utilitaires ----------
   function getProductIdFromUrl() {
     return parseInt(new URLSearchParams(window.location.search).get('id'), 10);
@@ -25,8 +25,24 @@
   }
 
   // ---------- Récupération du produit ----------
-  const product = (typeof pixelProducts !== 'undefined' ? pixelProducts : [])
-    .find(p => p.id === getProductIdFromUrl());
+  const productId = getProductIdFromUrl();
+  let product = null;
+
+  try {
+    // 1) Essaye Supabase (fiche détaillée).
+    if (typeof getStoreProductById === 'function') {
+      product = await getStoreProductById(productId);
+    }
+    // 2) Repli : données statiques locales (data.js) si Supabase indisponible.
+    if (!product) {
+      product = (typeof pixelProducts !== 'undefined' ? pixelProducts : [])
+        .find((p) => p.id === productId) || null;
+    }
+  } catch (e) {
+    console.warn('Erreur lors du chargement de la fiche produit.', e);
+    product = (typeof pixelProducts !== 'undefined' ? pixelProducts : [])
+      .find((p) => p.id === productId) || null;
+  }
 
   const $ = (id) => document.getElementById(id);
 
@@ -162,7 +178,17 @@
 
   // ---------- Produits similaires ----------
   const relatedGrid = $('related-grid');
-  const others = (typeof pixelProducts !== 'undefined' ? pixelProducts : []).filter(p => p.id !== product.id).slice(0, 3);
+  let others = [];
+  try {
+    if (typeof getStoreProducts === 'function') {
+      const all = await getStoreProducts();
+      others = all.filter((p) => p.id !== product.id).slice(0, 3);
+    }
+  } catch (e) { /* silencieux */ }
+  if (!others.length) {
+    others = (typeof pixelProducts !== 'undefined' ? pixelProducts : [])
+      .filter((p) => p.id !== product.id).slice(0, 3);
+  }
 
   if (others.length) {
     relatedGrid.innerHTML = others.map(p => `

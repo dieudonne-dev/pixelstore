@@ -20,19 +20,6 @@
 -- Extension pour générer des UUID
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- Helper : l'utilisateur courant est-il admin ?
-CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS boolean
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.users
-    WHERE id = auth.uid() AND role = 'admin'
-  );
-$$;
-
 -- ============================================================
 -- 1. GESTION DES UTILISATEURS
 -- ============================================================
@@ -86,6 +73,20 @@ DROP TRIGGER IF EXISTS on_auth_user_updated ON auth.users;
 CREATE TRIGGER on_auth_user_updated
   AFTER UPDATE OF email ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_user_update();
+
+-- Helper : l'utilisateur courant est-il admin ?
+-- (défini ici, après la création de public.users qu'il référence)
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.users
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+$$;
 
 -- Adresses
 CREATE TABLE IF NOT EXISTS public.addresses (
@@ -510,64 +511,94 @@ ALTER TABLE public.brands       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.coupons      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_status_history ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS users_self ON public.users;
 CREATE POLICY users_self ON public.users
   FOR ALL USING (id = auth.uid()) WITH CHECK (id = auth.uid());
 
+DROP POLICY IF EXISTS addresses_self ON public.addresses;
 CREATE POLICY addresses_self ON public.addresses
   FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS carts_self ON public.carts;
 CREATE POLICY carts_self ON public.carts
   FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS cart_items_self ON public.cart_items;
 CREATE POLICY cart_items_self ON public.cart_items
   FOR ALL USING (cart_id IN (SELECT id FROM public.carts WHERE user_id = auth.uid()))
   WITH CHECK (cart_id IN (SELECT id FROM public.carts WHERE user_id = auth.uid()));
 
+DROP POLICY IF EXISTS wishlists_self ON public.wishlists;
 CREATE POLICY wishlists_self ON public.wishlists
   FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS orders_self ON public.orders;
 CREATE POLICY orders_self ON public.orders
   FOR SELECT USING (user_id = auth.uid() OR public.is_admin());
+DROP POLICY IF EXISTS orders_insert ON public.orders;
 CREATE POLICY orders_insert ON public.orders
   FOR INSERT WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS order_items_self ON public.order_items;
 CREATE POLICY order_items_self ON public.order_items
   FOR SELECT USING (order_id IN (SELECT id FROM public.orders WHERE user_id = auth.uid() OR public.is_admin()));
 
+DROP POLICY IF EXISTS payments_self ON public.payments;
 CREATE POLICY payments_self ON public.payments
   FOR SELECT USING (order_id IN (SELECT id FROM public.orders WHERE user_id = auth.uid() OR public.is_admin()));
 
+DROP POLICY IF EXISTS reviews_read ON public.reviews;
 CREATE POLICY reviews_read ON public.reviews FOR SELECT USING (true);
+DROP POLICY IF EXISTS reviews_insert ON public.reviews;
 CREATE POLICY reviews_insert ON public.reviews FOR INSERT
   WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS products_read ON public.products;
 CREATE POLICY products_read   ON public.products   FOR SELECT USING (is_active);
+DROP POLICY IF EXISTS products_write ON public.products;
 CREATE POLICY products_write  ON public.products   FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS pimages_read ON public.product_images;
 CREATE POLICY pimages_read  ON public.product_images FOR SELECT USING (true);
+DROP POLICY IF EXISTS pimages_write ON public.product_images;
 CREATE POLICY pimages_write ON public.product_images FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS specs_read ON public.product_specs;
 CREATE POLICY specs_read  ON public.product_specs FOR SELECT USING (true);
+DROP POLICY IF EXISTS specs_write ON public.product_specs;
 CREATE POLICY specs_write ON public.product_specs FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS cert_read ON public.product_certificates;
 CREATE POLICY cert_read  ON public.product_certificates FOR SELECT USING (true);
+DROP POLICY IF EXISTS cert_write ON public.product_certificates;
 CREATE POLICY cert_write ON public.product_certificates FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS categories_read ON public.categories;
 CREATE POLICY categories_read ON public.categories FOR SELECT USING (true);
+DROP POLICY IF EXISTS categories_write ON public.categories;
 CREATE POLICY categories_write ON public.categories FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS brands_read ON public.brands;
 CREATE POLICY brands_read ON public.brands FOR SELECT USING (true);
+DROP POLICY IF EXISTS brands_write ON public.brands;
 CREATE POLICY brands_write ON public.brands FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS stock_read ON public.stock;
 CREATE POLICY stock_read  ON public.stock FOR SELECT USING (true);
+DROP POLICY IF EXISTS stock_write ON public.stock;
 CREATE POLICY stock_write ON public.stock FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS sm_read ON public.stock_movements;
 CREATE POLICY sm_read  ON public.stock_movements FOR SELECT USING (public.is_admin());
+DROP POLICY IF EXISTS sm_write ON public.stock_movements;
 CREATE POLICY sm_write ON public.stock_movements FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS coupons_read ON public.coupons;
 CREATE POLICY coupons_read ON public.coupons FOR SELECT USING (is_active);
+DROP POLICY IF EXISTS coupons_write ON public.coupons;
 CREATE POLICY coupons_write ON public.coupons FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS osh_read ON public.order_status_history;
 CREATE POLICY osh_read ON public.order_status_history FOR SELECT
   USING (order_id IN (SELECT id FROM public.orders WHERE user_id = auth.uid() OR public.is_admin()));
 
@@ -589,36 +620,174 @@ ON CONFLICT (slug) DO NOTHING;
 
 -- Produits « maison » PixelStore (data.js, ids 1-12)
 INSERT INTO public.products
-  (id, name, slug, reference, brand_id, tag, description, price, old_price, rating, rating_count, warranty)
-SELECT d.id, d.name, d.slug, d.reference, b.id, d.tag, d.desc, d.price, d.old_price, d.rating, d.rating_count, d.warranty
+  (id, name, slug, reference, brand_id, category_id, tag, description, price, old_price, rating, rating_count, warranty)
+SELECT d.id, d.name, d.slug, d.reference, b.id, c.id, d.tag, d."desc", d.price, d.old_price, d.rating, d.rating_count, d.warranty
 FROM (VALUES
-  (1::bigint,'OrdiPro Pixel X15','ordipro-pixel-x15','ORD-PX-X15','PixelStore','Nouveau',
+  (1::bigint,'OrdiPro Pixel X15','ordipro-pixel-x15','ORD-PX-X15','PixelStore','ordinateurs','Nouveau',
    'L''ultrabook signature de PixelStore : puissance, finesse et autonomie.',850000.00,950000.00,4.8::numeric,1,'2 ans'),
-  (2,'Clavier MécaK Pixel K68','clavier-mecak-pixel-k68','CLV-K68-RGB','PixelStore','Top vente',
+  (2,'Clavier MécaK Pixel K68','clavier-mecak-pixel-k68','CLV-K68-RGB','PixelStore','claviers','Top vente',
    'Un clavier mécanique compact aux switchs tactiles.',65000.00,85000.00,4.7,1,'1 an'),
-  (3,'PixelMouse Pro','pixelmouse-pro','SOU-PX-PRO','PixelStore','Nouveau',
+  (3,'PixelMouse Pro','pixelmouse-pro','SOU-PX-PRO','PixelStore','souris','Nouveau',
    'Notre souris gaming référence : capteur haute précision.',45000.00,58000.00,4.6,1,'2 ans'),
-  (4,'Écran UltraPixel 27''''','ecran-ultrapixel-27','ECR-UP-27K','PixelStore','4K Ultra HD',
+  (4,'Écran UltraPixel 27''''','ecran-ultrapixel-27','ECR-UP-27K','PixelStore','ecrans','4K Ultra HD',
    'Un moniteur 4K aux couleurs ultra-fidèles.',320000.00,380000.00,4.9,1,'2 ans'),
-  (5,'Casque PixelSound H90','casque-pixelsound-h90','CSQ-PS-H90','PixelStore','Son immersif',
+  (5,'Casque PixelSound H90','casque-pixelsound-h90','CSQ-PS-H90','PixelStore','casques','Son immersif',
    'Un casque surround à réduction de bruit active.',95000.00,110000.00,4.7,1,'1 an'),
-  (6,'SSD PixelStore 1To NVMe','ssd-pixelstore-1to-nvme','SSD-PX-1TB','PixelStore','Performance',
+  (6,'SSD PixelStore 1To NVMe','ssd-pixelstore-1to-nvme','SSD-PX-1TB','PixelStore','composants','Performance',
    'Un SSD ultra-rapide pour des chargements instantanés.',55000.00,65000.00,4.8,1,'5 ans'),
-  (7,'PixelBook 14','pixelbook-14','PC-PB-14','PixelStore','Ultra mobile',
+  (7,'PixelBook 14','pixelbook-14','PC-PB-14','PixelStore','ordinateurs','Ultra mobile',
    'Un ultrabook léger et endurant, pensé pour la mobilité.',720000.00,800000.00,4.6,1,'2 ans'),
-  (8,'Clavier PixelK Air 75','clavier-pixelk-air-75','CLV-K75-AIR','PixelStore','Confort',
+  (8,'Clavier PixelK Air 75','clavier-pixelk-air-75','CLV-K75-AIR','PixelStore','claviers','Confort',
    'Un clavier compact 75% au châssis fin.',78000.00,90000.00,4.5,1,'1 an'),
-  (9,'Souris PixelEase','souris-pixelease','SOU-PX-EASE','PixelStore','Confort',
+  (9,'Souris PixelEase','souris-pixelease','SOU-PX-EASE','PixelStore','souris','Confort',
    'Une souris silencieuse et légère pour un confort durable.',28000.00,35000.00,4.4,1,'1 an'),
-  (10,'Écran VisionPixel 24''''','ecran-visionpixel-24','ECR-VP-24F','PixelStore','Essentiel',
+  (10,'Écran VisionPixel 24''''','ecran-visionpixel-24','ECR-VP-24F','PixelStore','ecrans','Essentiel',
    'Un écran FHD polyvalent au suivi fluide.',145000.00,175000.00,4.5,1,'2 ans'),
-  (11,'Casque PixelStudio','casque-pixelstudio','CSQ-PS-STUDIO','PixelStore','Créateurs',
+  (11,'Casque PixelStudio','casque-pixelstudio','CSQ-PS-STUDIO','PixelStore','casques','Créateurs',
    'Un casque Hi-Fi à réduction de bruit hybride.',120000.00,140000.00,4.8,1,'2 ans'),
-  (12,'PixelGPU RTX 4070','pixelgpu-rtx-4070','GPU-PX-4070','PixelStore','Puissance',
+  (12,'PixelGPU RTX 4070','pixelgpu-rtx-4070','GPU-PX-4070','PixelStore','composants','Puissance',
    'La carte graphique nouvelle génération pour du gaming 1440p-4K.',620000.00,680000.00,4.9,1,'3 ans')
-) AS d(id, name, slug, reference, brand_name, tag, desc, price, old_price, rating, rating_count, warranty)
+) AS d(id, name, slug, reference, brand_name, category_slug, tag, "desc", price, old_price, rating, rating_count, warranty)
 JOIN public.brands b ON b.name = d.brand_name
+JOIN public.categories c ON c.slug = d.category_slug
 ON CONFLICT (id) DO NOTHING;
+
+-- Corrige la catégorie des produits déjà présents (ajouté après coup) :
+-- affecte category_id d'après le slug de la catégorie correspondante.
+UPDATE public.products p
+SET category_id = c.id
+FROM public.categories c
+WHERE p.category_id IS NULL
+  AND (p.id IN (1,7) AND c.slug = 'ordinateurs' OR
+       p.id IN (2,8) AND c.slug = 'claviers' OR
+       p.id IN (3,9) AND c.slug = 'souris' OR
+       p.id IN (4,10) AND c.slug = 'ecrans' OR
+       p.id IN (5,11) AND c.slug = 'casques' OR
+       p.id IN (6,12) AND c.slug = 'composants');
+
+-- Galerie d'images (alignée sur data.js : product.gallery)
+-- On purge d'abord les images de ces produits pour rendre le script ré-exécutable.
+DELETE FROM public.product_images WHERE product_id IN (1,2,3,4,5,6,7,8,9,10,11,12);
+INSERT INTO public.product_images (product_id, image_url, sort_order, is_main)
+SELECT p.id, g.image_url, g.sort_order, g.is_main
+FROM (VALUES
+  (1::bigint,'img/products/1496181133206-80ce9b88a853.jpg',0,true),
+  (1,'img/products/1531297484001-80022131f5a1.jpg',1,false),
+  (1,'img/products/1504639725590-34d0984388bd.jpg',2,false),
+  (2,'img/products/1587829741301-dc798b83add3.jpg',0,true),
+  (2,'img/products/1618384887929-16ec33fab9ef.jpg',1,false),
+  (2,'img/products/1595225476474-87563907a212.jpg',2,false),
+  (3,'img/products/1527864550417-7fd91fc51a46.jpg',0,true),
+  (3,'img/products/1615663245857-ac93bb7c39e7.jpg',1,false),
+  (3,'img/products/1592899677977-9c10ca588bbd.jpg',2,false),
+  (4,'img/products/1527443224154-c4a3942d3acf.jpg',0,true),
+  (4,'img/products/1547082299-de196ea013d6.jpg',1,false),
+  (4,'img/products/1585792180666-f7347c490ee2.jpg',2,false),
+  (5,'img/products/1505740420928-5e560c06d30e.jpg',0,true),
+  (5,'img/products/1546435770-a3e426bf472b.jpg',1,false),
+  (5,'img/products/1583394838336-acd977736f90.jpg',2,false),
+  (6,'img/products/1591370874773-6702e8f12fd8.jpg',0,true),
+  (6,'img/products/1600267185393-e158a98703de.jpg',1,false),
+  (6,'img/products/1563770660941-20978e870e26.jpg',2,false),
+  (7,'img/products/1517336714731-489689fd1ca8.jpg',0,true),
+  (7,'img/products/1531297484001-80022131f5a1.jpg',1,false),
+  (7,'img/products/1504639725590-34d0984388bd.jpg',2,false),
+  (8,'img/products/1618384887929-16ec33fab9ef.jpg',0,true),
+  (8,'img/products/1595225476474-87563907a212.jpg',1,false),
+  (8,'img/products/1541140532154-b024d705b90a.jpg',2,false),
+  (9,'img/products/1615663245857-ac93bb7c39e7.jpg',0,true),
+  (9,'img/products/1527864550417-7fd91fc51a46.jpg',1,false),
+  (9,'img/products/1592899677977-9c10ca588bbd.jpg',2,false),
+  (10,'img/products/1551645120-d70bfe84c826.jpg',0,true),
+  (10,'img/products/1527443224154-c4a3942d3acf.jpg',1,false),
+  (10,'img/products/1547082299-de196ea013d6.jpg',2,false),
+  (11,'img/products/1546435770-a3e426bf472b.jpg',0,true),
+  (11,'img/products/1583394838336-acd977736f90.jpg',1,false),
+  (11,'img/products/1484704849700-f032a568e944.jpg',2,false),
+  (12,'img/products/1591488320449-011701bb6704.jpg',0,true),
+  (12,'img/products/1587202372634-32705e3bf49c.jpg',1,false),
+  (12,'img/products/1591799264318-7e6ef8ddb7ea.jpg',2,false)
+) AS g(pid, image_url, sort_order, is_main)
+JOIN public.products p ON p.id = g.pid;
+
+-- Caractéristiques techniques (alignées sur data.js : product.specs)
+INSERT INTO public.product_specs (product_id, label, value, sort_order)
+SELECT p.id, s.label, s.value, s.sort_order
+FROM (VALUES
+  (1::bigint,'Processeur','Intel Core i7-13700H',1),
+  (1,'Mémoire RAM','16 Go DDR5',2),(1,'Stockage','SSD NVMe 1 To',3),
+  (1,'Écran','15,6'''' FHD 144 Hz',4),(1,'Carte graphique','RTX 4060 8 Go',5),
+  (1,'Système d''exploitation','Windows 11 Pro',6),(1,'Connectique','USB-C, HDMI 2.1, Jack 3,5 mm',7),
+  (1,'Autonomie','Jusqu''à 12 h',8),
+  (2,'Format','68 touches (65%)',1),(2,'Switchs','Mécaniques rouges',2),
+  (2,'Rétroéclairage','RGB par touche',3),(2,'Connexion','USB-C / 2.4 GHz',4),
+  (2,'Matériaux','Châssis aluminium',5),(2,'Touches','PBT double injection',6),
+  (2,'Anti-ghosting','NKRO plein clavier',7),
+  (3,'Capteur','25 600 DPI',1),(3,'Boutons','8 programmables',2),(3,'Taux de rapport','1000 Hz',3),
+  (3,'Connexion','Sans fil 2.4 GHz',4),(3,'Poids','58 g',5),(3,'Autonomie','70 h',6),
+  (3,'Compatibilité','Windows, macOS, Linux',7),
+  (4,'Dalle','IPS 27 pouces',1),(4,'Résolution','4K UHD 3840x2160',2),(4,'Taux de rafraîch.','120 Hz',3),
+  (4,'Colorimétrie','100% sRGB',4),(4,'Connectique','HDMI 2.1, DisplayPort',5),(4,'HDR','HDR400',6),
+  (4,'Angle de vue','178° / 178°',7),
+  (5,'Transducteurs','50 mm',1),(5,'Réduction bruit','ANC active',2),(5,'Son','Surround 7.1 virtuel',3),
+  (5,'Micro','Amovible antibruit',4),(5,'Connexion','USB / Sans fil',5),(5,'Autonomie','40 h',6),
+  (5,'Poids','320 g',7),
+  (6,'Capacité','1 To',1),(6,'Interface','NVMe PCIe 4.0',2),(6,'Lecture','7 300 Mo/s',3),
+  (6,'Écriture','6 800 Mo/s',4),(6,'Format','M.2 2280',5),(6,'Endurance','600 TBW',6),
+  (6,'Garantie','5 ans',7),
+  (7,'Processeur','Intel Core i5-1340P',1),(7,'Mémoire RAM','16 Go LPDDR5',2),
+  (7,'Stockage','SSD NVMe 512 Go',3),(7,'Écran','14'''' 2.8K OLED',4),(7,'Poids','1,2 kg',5),
+  (7,'Autonomie','Jusqu''à 14 h',6),(7,'Système d''exploitation','Windows 11 Pro',7),
+  (8,'Format','75% (82 touches)',1),(8,'Switchs','Mécaniques bruns',2),(8,'Hot-swap','Compatible 3/5 broches',3),
+  (8,'Rétroéclairage','RGB 16,8 M',4),(8,'Connexion','Bluetooth / 2.4 GHz / USB-C',5),
+  (8,'Multi-appareils','Jusqu''à 3 appareils',6),(8,'Touches','PBT double injection',7),
+  (9,'Capteur','12 000 DPI',1),(9,'Boutons','6 programmables',2),(9,'Clics','Silencieux',3),
+  (9,'Connexion','Sans fil 2.4 GHz',4),(9,'Poids','75 g',5),(9,'Autonomie','Jusqu''à 90 h',6),
+  (9,'Recharge','USB-C',7),
+  (10,'Dalle','IPS 24 pouces',1),(10,'Résolution','FHD 1920x1080',2),(10,'Taux de rafraîch.','100 Hz',3),
+  (10,'Colorimétrie','99% sRGB',4),(10,'Connectique','HDMI, DisplayPort',5),
+  (10,'Protection','Anti-lumière bleue',6),(10,'Angle de vue','178° / 178°',7),
+  (11,'Transducteurs','45 mm Hi-Fi',1),(11,'Réduction bruit','ANC hybride',2),(11,'Son','Audio haute résolution',3),
+  (11,'Micro','Studio intégré',4),(11,'Connexion','Bluetooth 5.3 / Jack',5),(11,'Autonomie','45 h',6),
+  (11,'Recharge','USB-C',7),
+  (12,'GPU','NVIDIA GeForce RTX 4070',1),(12,'Mémoire','12 Go GDDR6X',2),(12,'Cœurs CUDA','5 888',3),
+  (12,'Fréquence boost','2,5 GHz',4),(12,'Refroidissement','Triple ventilateur',5),(12,'TGP','200 W',6),
+  (12,'Connectique','HDMI 2.1, DisplayPort 1.4a',7)
+) AS s(pid, label, value, sort_order)
+JOIN public.products p ON p.id = s.pid
+ON CONFLICT (product_id, label) DO NOTHING;
+
+-- Certificats de conformité (alignés sur data.js : product.cert)
+INSERT INTO public.product_certificates (product_id, title, number, authority, cert_date, points)
+SELECT p.id, crt.title, crt.number, crt.authority, crt.cert_date::date, crt.points
+FROM (VALUES
+  (1::bigint,'Certificat de conformité CE','PC-2026-0015','Bureau Burundais de Normalisation (BBN)','2026-06-12',
+   '["Conforme aux exigences essentielles de la directive CEM 2014/30/UE","Certifié RoHS : fabrication sans substances dangereuses","Sécurité électrique selon la norme CEI 62368-1"]'::jsonb),
+  (2,'Certificat de conformité CEM','PC-2026-0032','Bureau Burundais de Normalisation (BBN)','2026-04-03',
+   '["Conforme à la directive CEM 2014/30/UE","Certifié RoHS : matériaux sans plomb","Clavier usé et testé 1 000 000 de frappes"]'::jsonb),
+  (3,'Certificat de conformité CE','PC-2026-0041','Bureau Burundais de Normalisation (BBN)','2026-05-21',
+   '["Conforme à la directive basse tension 2014/35/UE","Certifié RoHS et REACH","Testée à 150 millions de clics"]'::jsonb),
+  (4,'Certificat de conformité sécurité','PC-2026-0058','Bureau Burundais de Normalisation (BBN)','2026-02-09',
+   '["Conforme à la norme CEI 62368-1 (sécurité électrique)","Certifié TÜV (filtre de lumière bleue, anti-scintillement)","Respecte la directive EEE 2012/19/UE (recyclage)"]'::jsonb),
+  (5,'Certificat de conformité acoustique','PC-2026-0069','Bureau Burundais de Normalisation (BBN)','2026-03-17',
+   '["Conforme à la directive CEM 2014/30/UE","Limitation du niveau sonore (norme EN 50332)","Certifié RoHS pour les composants électroniques"]'::jsonb),
+  (6,'Certificat de conformité CE','PC-2026-0081','Bureau Burundais de Normalisation (BBN)','2026-05-28',
+   '["Conforme à la directive CEM 2014/30/UE","Certifié RoHS : sans plomb ni cadmium","Endurance testée (600 TBW)"]'::jsonb),
+  (7,'Certificat de conformité CE','PC-2026-0094','Bureau Burundais de Normalisation (BBN)','2026-07-14',
+   '["Conforme à la directive CEM 2014/30/UE","Certifié RoHS : fabrication sans substances dangereuses","Sécurité électrique selon la norme CEI 62368-1"]'::jsonb),
+  (8,'Certificat de conformité CEM','PC-2026-0102','Bureau Burundais de Normalisation (BBN)','2026-07-22',
+   '["Conforme à la directive CEM 2014/30/UE","Certifié RoHS : matériaux sans plomb","Switchs testés à 70 millions de frappes"]'::jsonb),
+  (9,'Certificat de conformité CE','PC-2026-0111','Bureau Burundais de Normalisation (BBN)','2026-08-05',
+   '["Conforme à la directive basse tension 2014/35/UE","Certifié RoHS : sans plomb ni mercure","Clics testés à 50 millions d''opérations"]'::jsonb),
+  (10,'Certificat de conformité sécurité','PC-2026-0120','Bureau Burundais de Normalisation (BBN)','2026-08-19',
+   '["Conforme à la norme CEI 62368-1 (sécurité électrique)","Certifié TÜV (filtre de lumière bleue)","Respecte la directive EEE 2012/19/UE (recyclage)"]'::jsonb),
+  (11,'Certificat de conformité acoustique','PC-2026-0129','Bureau Burundais de Normalisation (BBN)','2026-06-10',
+   '["Conforme à la directive CEM 2014/30/UE","Limitation du niveau sonore (norme EN 50332)","Certifié RoHS pour les composants électroniques"]'::jsonb),
+  (12,'Certificat de conformité CE','PC-2026-0138','Bureau Burundais de Normalisation (BBN)','2026-08-27',
+   '["Conforme à la directive CEM 2014/30/UE","Certifié RoHS : sans plomb ni cadmium","Alimentation conforme EN 62368-1"]'::jsonb)
+) AS crt(pid, title, number, authority, cert_date, points)
+JOIN public.products p ON p.id = crt.pid
+ON CONFLICT (product_id) DO NOTHING;
 
 -- Stocks (alignés sur data.js : stock des produits PixelStore)
 INSERT INTO public.stock (product_id, quantity, low_stock_threshold)

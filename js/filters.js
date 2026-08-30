@@ -7,6 +7,10 @@ const productsGrid = document.getElementById('products-grid');
 const resultsCount = document.getElementById('results-count');
 const noResults = document.getElementById('no-results');
 
+// Catalogue chargé soit depuis Supabase, soit depuis les données locales.
+// Remplacé de façon asynchrone par loadCatalog().
+let catalog = [];
+
 function formatPrice(price) {
   // Formate le prix avec des espaces comme séparateurs de milliers (ex: 850000 -> "850 000")
   return price.toLocaleString('fr-FR');
@@ -90,7 +94,7 @@ const sortSelect = document.getElementById('sort-select');
 const resetBtn = document.getElementById('reset-filters');
 
 function applyFilters() {
-  let filtered = [...products]; // copie du tableau original
+  let filtered = [...catalog]; // copie du tableau actuel
 
   // 1. Filtre recherche (nom du produit)
   const searchTerm = searchInput.value.toLowerCase().trim();
@@ -184,5 +188,21 @@ resetBtn.addEventListener('click', () => {
 });
 
 // ==================== INITIALISATION ====================
-// Affiche tous les produits au chargement initial de la page
-renderProducts(products);
+// Charge le catalogue (Supabase d'abord, sinon données locales) puis affiche.
+// On garde aussi le tableau global `products` synchronisé pour les pages
+// qui y font référence (panier, etc.).
+async function loadCatalog() {
+  catalog = await getCatalogProducts();
+
+  // Synchronise le tableau global au cas où d'autres scripts le lisent.
+  try {
+    if (typeof products !== 'undefined' && Array.isArray(products)) {
+      products.length = 0;
+      catalog.forEach((p) => products.push(p));
+    }
+  } catch (e) { /* silencieux */ }
+
+  applyFilters();
+}
+
+loadCatalog();
