@@ -19,10 +19,22 @@
       'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'
     ];
 
+    // Le build UMD expose l'API sur window.supabase (createClient y est une
+    // propriété). Certaines anciennes sources fournissent createClient en
+    // fonction globale : on couvre les deux cas.
+    function getCreateClient() {
+      if (typeof window.supabase === 'object' && typeof window.supabase.createClient === 'function') {
+        return window.supabase.createClient;
+      }
+      if (typeof createClient === 'function') return createClient;
+      return null;
+    }
+
     function tryCreate() {
       try {
-        if (typeof createClient !== 'function') return false;
-        adminSupabase = createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
+        var create = getCreateClient();
+        if (!create) return false;
+        adminSupabase = create(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
         window.adminSupabase = adminSupabase;
         adminReady = true;
         resolveReady();
@@ -34,7 +46,7 @@
     }
 
     function loadFrom(i) {
-      if (typeof createClient === 'function') { tryCreate(); return; }
+      if (getCreateClient()) { tryCreate(); return; }
       if (i >= CDN_SOURCES.length) {
         console.error('Impossible de charger le SDK supabase-js (aucune source).');
         resolveReady();
@@ -52,7 +64,7 @@
       document.head.appendChild(s);
     }
 
-    if (typeof createClient === 'function') {
+    if (getCreateClient()) {
       tryCreate();
     } else {
       loadFrom(0);
