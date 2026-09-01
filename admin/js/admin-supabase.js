@@ -264,6 +264,32 @@
     var brandId = await resolveBrand(p.brand);
     var catId = await resolveCategory(p.category);
     var price = Number(p.price) || 0;
+
+    // Référence (SKU) unique : une référence déjà portée par un autre produit
+    // lève une vraie violation products_reference_key -> on prévient avec un
+    // message clair. En édition, on ignore le produit courant.
+    if (p.reference) {
+      var refCheck = await adminSupabase.from('products')
+        .select('id').eq('reference', p.reference).maybeSingle();
+      if (refCheck.error) throw refCheck.error;
+      if (refCheck.data && refCheck.data.id !== p.id) {
+        throw new Error('Cette référence existe déjà. Choisissez une référence unique.');
+      }
+    }
+
+    // Slug unique : le slug du nouveau produit doit être libre. En cas de
+    // collision on désambiguïse automatiquement (base, base-2, base-3...).
+    var baseSlug = slug;
+    var suffix = 1;
+    while (true) {
+      var slugCheck = await adminSupabase.from('products')
+        .select('id').eq('slug', slug).maybeSingle();
+      if (slugCheck.error) throw slugCheck.error;
+      if (!slugCheck.data || slugCheck.data.id === p.id) break;
+      suffix += 1;
+      slug = baseSlug + '-' + suffix;
+    }
+
     var payload = {
       name: p.name,
       slug: slug,
@@ -284,7 +310,21 @@
       await adminSupabase.from('products').update(payload).eq('id', p.id);
     } else {
       var ins = await adminSupabase.from('products').insert(payload).select('id').single();
-      if (ins.error) throw ins.error;
+      // La séquence products_id_seq peut ne pas avoir avancé (les seeds
+      // insèrent avec des id explicites) : un nouvel insert sans id repartirait
+      // de 1 et violerait la clé primaire. On réessaie alors avec un id libre.
+      if (ins.error && String(ins.error.message || '').indexOf('products_pkey') !== -1) {
+        var maxRow = await adminSupabase.from('products')
+          .select('id').order('id', { ascending: false }).limit(1).maybeSingle();
+        var nextId = (maxRow.data && maxRow.data.id ? maxRow.data.id : 0) + 1;
+        var ins2 = await adminSupabase.from('products')
+          .insert(Object.assign({}, payload, { id: nextId }))
+          .select('id').single();
+        if (ins2.error) throw ins2.error;
+        ins = ins2;
+      } else if (ins.error) {
+        throw ins.error;
+      }
       productId = ins.data.id;
     }
 
@@ -297,6 +337,15 @@
     // Spécifications
     await adminSupabase.from('product_specs').delete().eq('product_id', productId);
     var specs = (p.specs || []).filter(function (s) { return s && s[0] && s[1]; });
+    // Dédoublonne par label (contrainte uq_spec UNIQUE (product_id, label)) :
+    // garde la première occurrence, ignore les suivantes.
+    var seenLabels = {};
+    specs = specs.filter(function (s) {
+      var k = String(s[0]).trim().toLowerCase();
+      if (seenLabels[k]) return false;
+      seenLabels[k] = true;
+      return true;
+    });
     if (specs.length) {
       await adminSupabase.from('product_specs').insert(specs.map(function (s, i) {
         return { product_id: productId, label: s[0], value: s[1], sort_order: i };

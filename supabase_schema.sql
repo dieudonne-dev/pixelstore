@@ -871,3 +871,9 @@ ON CONFLICT (code) DO NOTHING;
 UPDATE public.users
    SET role = 'admin'
  WHERE lower(email) = lower('admin@pixelstore.bi');
+
+-- Réinitialise la séquence d'identité de products. Les seeds ci-dessus insèrent
+-- avec des id EXPLICITES (1..12) : la séquence ne progresse pas, et le prochain
+-- insertion SANS id repartirait de 1 → violation de clé primaire (products_pkey).
+-- Cette ligne remet la séquence au-dessus du max actuel, ce qui la corrige.
+SELECT setval('products_id_seq', GREATEST((SELECT COALESCE(MAX(id), 1) FROM public.products), 1));
