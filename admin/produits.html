@@ -120,7 +120,7 @@
               <tr>
                 <td>
                   <div class="table-product">
-                    <img src="${p.image || ''}" alt="${p.name}">
+                    <img src="${window.adminResolveImage(p.image)}" alt="${p.name}">
                     <div>
                       <strong>${p.name}</strong>
                       <span>${p.reference}</span>

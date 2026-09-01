@@ -421,6 +421,16 @@
       .replace(/^-+|-+$/g, '');
   }
 
+  // Résout une URL d'image pour l'affichage depuis le panneau admin (/admin/...).
+  // Les chemins relatifs stockés (ex. "img/products/x.jpg") pointent vers la
+  // racine du site ; sous /admin/ il faut remonter d'un niveau ("../img/...").
+  // Les URL absolues, data: et les chemins racine ("/...") sont laissés tels quels.
+  function resolveAdminImage(url) {
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url) || /^data:/i.test(url) || url.charAt(0) === '/') return url;
+    return '../' + url;
+  }
+
   // ==========================================================================
   // GATE : écran de connexion admin + protection du contenu
   // ==========================================================================
@@ -534,6 +544,7 @@
   adminDB.slugify = slugify;
   window.adminGate = adminGate;
   window.adminConfig = CFG;
+  window.adminResolveImage = resolveAdminImage;
 
   init();
 })();

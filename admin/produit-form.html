@@ -152,7 +152,7 @@
                   <input type="hidden" id="fImage" value="${v.image}">
                   <span class="hint">L'image sélectionnée est intégrée directement au produit (format base64).</span>
                   <div id="imagePreviewWrap" style="display:${v.image ? 'flex' : 'none'};align-items:center;gap:16px;margin-top:14px">
-                    <img class="upload-preview" id="imagePreview" src="${v.image || ''}" alt="Aperçu">
+                    <img class="upload-preview" id="imagePreview" src="${window.adminResolveImage(v.image)}" alt="Aperçu">
                     <button type="button" class="btn btn-danger btn-sm" id="removeImage">Retirer l'image</button>
                   </div>
                 </div>
