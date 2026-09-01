@@ -13,22 +13,49 @@
   var adminReady = false;
 
   function init() {
-    if (typeof createClient === 'function') {
-      adminSupabase = createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
-      adminReady = true;
-      resolveReady();
-    } else {
+    var CDN_SOURCES = [
+      'vendor/supabase.min.js',
+      'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+      'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'
+    ];
+
+    function tryCreate() {
+      try {
+        if (typeof createClient !== 'function') return false;
+        adminSupabase = createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
+        window.adminSupabase = adminSupabase;
+        adminReady = true;
+        resolveReady();
+        return true;
+      } catch (e) {
+        console.error('Init admin Supabase :', e);
+        return false;
+      }
+    }
+
+    function loadFrom(i) {
+      if (typeof createClient === 'function') { tryCreate(); return; }
+      if (i >= CDN_SOURCES.length) {
+        console.error('Impossible de charger le SDK supabase-js (aucune source).');
+        resolveReady();
+        return;
+      }
       var s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+      s.src = CDN_SOURCES[i];
       s.onload = function () {
-        try {
-          adminSupabase = createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
-          adminReady = true;
-          resolveReady();
-        } catch (e) { console.error('Init admin Supabase :', e); resolveReady(); }
+        if (!tryCreate()) loadFrom(i + 1);
       };
-      s.onerror = function () { console.error('Impossible de charger le SDK supabase-js.'); resolveReady(); };
+      s.onerror = function () {
+        console.error('SDK supabase-js indisponible depuis :', CDN_SOURCES[i]);
+        loadFrom(i + 1);
+      };
       document.head.appendChild(s);
+    }
+
+    if (typeof createClient === 'function') {
+      tryCreate();
+    } else {
+      loadFrom(0);
     }
   }
 
@@ -420,7 +447,7 @@
     }
 
     // Relance automatiquement après connexion via l'écran de connexion.
-    start();
+    whenReady().then(function () { start(); });
   }
 
   // Expose
