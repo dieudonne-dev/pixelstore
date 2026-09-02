@@ -29,8 +29,91 @@ const newsletterForm = document.getElementById('newsletter-form');
 if (newsletterForm) {
   newsletterForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    alert('Merci pour votre inscription !');
-    newsletterForm.reset();
+    const email = newsletterForm.querySelector('input[type="email"]');
+    const btn = newsletterForm.querySelector('button');
+    const val = email ? email.value.trim() : '';
+    if (!val) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Envoi...';
+
+    const doInsert = () => {
+      supabase.from('newsletter_subscribers')
+        .insert({ email: val, source: 'footer' })
+        .then(({ error }) => {
+          if (error && error.code === '23505') {
+            alert('Vous êtes déjà inscrit !');
+          } else if (error) {
+            alert('Une erreur est survenue. Réessayez.');
+          } else {
+            alert('Merci pour votre inscription !');
+          }
+          newsletterForm.reset();
+          btn.disabled = false;
+          btn.textContent = 'S\'abonner';
+        });
+    };
+
+    if (typeof supabase !== 'undefined' && supabase) {
+      doInsert();
+    } else {
+      alert('Service temporairement indisponible. Réessayez plus tard.');
+      btn.disabled = false;
+      btn.textContent = 'S\'abonner';
+    }
+  });
+}
+
+// ==================== FORMULAIRE CONTACT ====================
+
+const contactForm = document.getElementById('contact-form');
+
+if (contactForm) {
+  contactForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const nameEl = contactForm.querySelector('input[name="name"]') || contactForm.querySelector('#name');
+    const emailEl = contactForm.querySelector('input[name="email"]') || contactForm.querySelector('#email');
+    const subjectEl = contactForm.querySelector('input[name="subject"]') || contactForm.querySelector('#subject');
+    const msgEl = contactForm.querySelector('textarea[name="message"]') || contactForm.querySelector('#message');
+    const btn = contactForm.querySelector('button[type="submit"]');
+
+    const payload = {
+      name: nameEl ? nameEl.value.trim() : '',
+      email: emailEl ? emailEl.value.trim() : '',
+      subject: subjectEl ? subjectEl.value.trim() : '',
+      message: msgEl ? msgEl.value.trim() : ''
+    };
+
+    if (!payload.name || !payload.email || !payload.message) {
+      alert('Veuillez remplir tous les champs.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Envoi en cours...';
+
+    const doInsert = () => {
+      supabase.from('contacts')
+        .insert(payload)
+        .then(({ error }) => {
+          if (error) {
+            alert('Une erreur est survenue. Réessayez.');
+          } else {
+            alert('Message envoyé ! Nous vous répondrons rapidement.');
+            contactForm.reset();
+          }
+          btn.disabled = false;
+          btn.textContent = 'Envoyer le message';
+        });
+    };
+
+    if (typeof supabase !== 'undefined' && supabase) {
+      doInsert();
+    } else {
+      alert('Service temporairement indisponible. Réessayez plus tard.');
+      btn.disabled = false;
+      btn.textContent = 'Envoyer le message';
+    }
   });
 }
 

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abonnés newsletter — PixelStore Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="css/admin.css">
+  </head>
+  <body>
+
+    <script src="js/admin-config.js"></script>
+    <script src="js/admin-supabase.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/admin.js"></script>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const content = renderAdminLayout('abonnes');
+
+        let subscribers = [];
+        let totalCount = 0;
+        let stats = { total: 0, active: 0, thisMonth: 0, bySource: {} };
+        let page = 1;
+        const pageSize = 20;
+        let search = '';
+        let pendingDeleteId = null;
+
+        content.innerHTML = `
+          <div class="page-breadcrumb">
+            <a href="index.html">${ICONS.home} Tableau de bord</a>
+            <span>/</span>
+            <span>Abonnés newsletter</span>
+          </div>
+
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Abonnés newsletter</h1>
+              <p class="page-subtitle">Gérez les personnes inscrites à votre newsletter.</p>
+            </div>
+            <div class="topbar-search" style="max-width:280px">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="text" id="searchInput" placeholder="Rechercher par email...">
+            </div>
+          </div>
+
+          <div class="stats-row" id="statsRow">
+            <div class="stat-mini">
+              <div class="stat-mini-value" id="statTotal">-</div>
+              <div class="stat-mini-label">Total abonnés</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini-value" id="statActive">-</div>
+              <div class="stat-mini-label">Actifs</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini-value" id="statMonth">-</div>
+              <div class="stat-mini-label">Ce mois-ci</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini-value" id="statFooter">-</div>
+              <div class="stat-mini-label">Via footer</div>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Téléphone</th>
+                  <th>Nom</th>
+                  <th>Source</th>
+                  <th>Inscrit le</th>
+                  <th>Statut</th>
+                  <th style="text-align:right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="subsBody"></tbody>
+            </table>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px">
+            <span class="hint" id="pageInfo"></span>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-secondary btn-sm" id="prevPage" disabled>← Précédent</button>
+              <button class="btn btn-secondary btn-sm" id="nextPage" disabled>Suivant →</button>
+            </div>
+          </div>
+
+          <div class="modal-backdrop" id="deleteModal">
+            <div class="modal">
+              <div class="modal-header">
+                <h3>Supprimer l'abonné</h3>
+                <button class="modal-close" id="deleteModalClose" aria-label="Fermer">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              </div>
+              <p style="font-size:0.92rem;color:var(--text-secondary)">Voulez-vous vraiment supprimer l'abonné <strong id="deleteEmail" style="color:var(--text-primary)"></strong> ?</p>
+              <div class="modal-footer">
+                <button class="btn btn-ghost" id="cancelDelete">Annuler</button>
+                <button class="btn btn-danger" id="confirmDelete">Supprimer</button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        const tbody = document.getElementById('subsBody');
+        const deleteModal = document.getElementById('deleteModal');
+
+        function formatDate(d) {
+          if (!d) return '-';
+          return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        function renderStats() {
+          document.getElementById('statTotal').textContent = stats.total;
+          document.getElementById('statActive').textContent = stats.active;
+          document.getElementById('statMonth').textContent = stats.thisMonth;
+          document.getElementById('statFooter').textContent = stats.bySource.footer || 0;
+        }
+
+        function renderSubs() {
+          const filtered = search
+            ? subscribers.filter(s => s.email.toLowerCase().includes(search) || (s.name || '').toLowerCase().includes(search))
+            : subscribers;
+
+          tbody.innerHTML = filtered.map(s => `
+            <tr>
+              <td><strong>${s.email}</strong></td>
+              <td>${s.phone || '<span class="hint">-</span>'}</td>
+              <td>${s.name || '<span class="hint">-</span>'}</td>
+              <td><span class="badge badge-blue">${s.source}</span></td>
+              <td>${formatDate(s.createdAt)}</td>
+              <td>${s.isActive ? '<span class="badge badge-green">Actif</span>' : '<span class="badge badge-gray">Inactif</span>'}</td>
+              <td>
+                <div style="display:flex;gap:6px;justify-content:flex-end">
+                  <button class="btn btn-secondary btn-icon btn-toggle-sub" data-id="${s.id}" data-active="${s.isActive}" title="${s.isActive ? 'Désactiver' : 'Activer'}">
+                    ${s.isActive
+                      ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>'
+                      : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>'
+                    }
+                  </button>
+                  <button class="btn btn-danger btn-icon btn-delete-sub" data-id="${s.id}" title="Supprimer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `).join('') || '<tr><td colspan="7"><div class="empty-state"><h3>Aucun abonné</h3><p>Les personnes qui s\'abonneront via le formulaire apparaîtront ici.</p></div></td></tr>';
+
+          document.getElementById('pageInfo').textContent = `Page ${page} — ${filtered.length} abonné(s)`;
+          document.getElementById('prevPage').disabled = page <= 1;
+          document.getElementById('nextPage').disabled = subscribers.length < pageSize;
+        }
+
+        tbody.addEventListener('click', async (e) => {
+          const toggleBtn = e.target.closest('.btn-toggle-sub');
+          const deleteBtn = e.target.closest('.btn-delete-sub');
+          if (toggleBtn) {
+            const id = parseInt(toggleBtn.dataset.id, 10);
+            const currentActive = toggleBtn.dataset.active === 'true';
+            try {
+              await adminDB.toggleSubscriber(id, !currentActive);
+              showToast(currentActive ? 'Abonné désactivé.' : 'Abonné réactivé.');
+              await load();
+            } catch (err) { showToast('Erreur.', 'error'); }
+          }
+          if (deleteBtn) {
+            pendingDeleteId = parseInt(deleteBtn.dataset.id, 10);
+            const s = subscribers.find(x => x.id === pendingDeleteId);
+            document.getElementById('deleteEmail').textContent = s ? s.email : '';
+            deleteModal.classList.add('open');
+          }
+        });
+
+        document.getElementById('confirmDelete').addEventListener('click', async () => {
+          try {
+            await adminDB.deleteSubscriber(pendingDeleteId);
+            showToast('Abonné supprimé.');
+            deleteModal.classList.remove('open');
+            await load();
+          } catch (err) { showToast('Suppression impossible.', 'error'); }
+          pendingDeleteId = null;
+        });
+
+        document.getElementById('deleteModalClose').addEventListener('click', () => deleteModal.classList.remove('open'));
+        document.getElementById('cancelDelete').addEventListener('click', () => deleteModal.classList.remove('open'));
+        deleteModal.addEventListener('click', (e) => { if (e.target === deleteModal) deleteModal.classList.remove('open'); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') deleteModal.classList.remove('open'); });
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+          search = e.target.value.trim().toLowerCase();
+          renderSubs();
+        });
+
+        document.getElementById('prevPage').addEventListener('click', () => { if (page > 1) { page--; load(); } });
+        document.getElementById('nextPage').addEventListener('click', () => { page++; load(); });
+
+        async function load() {
+          try {
+            [subscribers, totalCount, stats] = await Promise.all([
+              adminDB.subscribers({ page, pageSize }),
+              adminDB.countSubscribers(),
+              adminDB.subscriberStats()
+            ]);
+            renderStats();
+            renderSubs();
+          } catch (err) {
+            showToast('Erreur de chargement.', 'error');
+          }
+        }
+
+        adminGate(content, load);
+      });
+    </script>
+
+  </body>
+</html>

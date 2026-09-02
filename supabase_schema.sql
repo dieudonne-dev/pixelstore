@@ -345,6 +345,33 @@ CREATE TABLE IF NOT EXISTS public.reviews (
 );
 
 -- ============================================================
+-- NEWSLETTER — abonnés (formulaire footer du site)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.newsletter_subscribers (
+  id         bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  email      text NOT NULL,
+  phone      text,
+  name       text,
+  source     text NOT NULL DEFAULT 'footer',
+  is_active  boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (email)
+);
+
+-- ============================================================
+-- CONTACTS — messages du formulaire contact
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.contacts (
+  id         bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  name       text NOT NULL,
+  email      text NOT NULL,
+  subject    text NOT NULL DEFAULT '',
+  message    text NOT NULL,
+  is_read    boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- ============================================================
 -- VUES UTILES (dashboards admin)
 -- ============================================================
 
@@ -529,6 +556,8 @@ ALTER TABLE public.categories   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.brands       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.coupons      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_status_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.newsletter_subscribers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.contacts ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS users_self ON public.users;
 CREATE POLICY users_self ON public.users
@@ -626,6 +655,28 @@ CREATE POLICY coupons_write ON public.coupons FOR ALL USING (public.is_admin()) 
 DROP POLICY IF EXISTS osh_read ON public.order_status_history;
 CREATE POLICY osh_read ON public.order_status_history FOR SELECT
   USING (order_id IN (SELECT id FROM public.orders WHERE user_id = auth.uid() OR public.is_admin()));
+
+-- Newsletter subscribers : tout le monde peut s'abonner (insert), admin gère tout
+DROP POLICY IF EXISTS nsub_insert ON public.newsletter_subscribers;
+CREATE POLICY nsub_insert ON public.newsletter_subscribers FOR INSERT
+  WITH CHECK (true);
+DROP POLICY IF EXISTS nsub_read ON public.newsletter_subscribers;
+CREATE POLICY nsub_read ON public.newsletter_subscribers FOR SELECT
+  USING (public.is_admin());
+DROP POLICY IF EXISTS nsub_write ON public.newsletter_subscribers;
+CREATE POLICY nsub_write ON public.newsletter_subscribers FOR ALL
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+-- Contacts : tout le monde peut envoyer un message (insert), admin gère tout
+DROP POLICY IF EXISTS contacts_insert ON public.contacts;
+CREATE POLICY contacts_insert ON public.contacts FOR INSERT
+  WITH CHECK (true);
+DROP POLICY IF EXISTS contacts_read ON public.contacts;
+CREATE POLICY contacts_read ON public.contacts FOR SELECT
+  USING (public.is_admin());
+DROP POLICY IF EXISTS contacts_write ON public.contacts;
+CREATE POLICY contacts_write ON public.contacts FOR ALL
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- ============================================================
 -- EXÉCUTION DES FONCTIONS (rôles anon / authenticated)

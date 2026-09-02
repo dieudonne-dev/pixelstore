@@ -298,6 +298,73 @@
         totals.lowStock = (st.data || []).filter(function (r) { return (Number(r.quantity) || 0) <= (Number(r.low_stock_threshold) || 5); }).length;
       } catch (e) { /* sous-comptage */ }
       return totals;
+    },
+
+    // ---- Newsletter subscribers ----
+    async subscribers(opts) {
+      if (!adminSupabase) return [];
+      var q = adminSupabase.from('newsletter_subscribers').select('*').order('created_at', { ascending: false });
+      if (opts && opts.page && opts.pageSize) {
+        var start = (opts.page - 1) * opts.pageSize;
+        q = q.range(start, start + opts.pageSize - 1);
+      }
+      var { data, error } = await q;
+      if (error) throw error;
+      return (data || []).map(function (s) {
+        return { id: s.id, email: s.email, phone: s.phone || '', name: s.name || '', source: s.source || 'footer', isActive: !!s.is_active, createdAt: s.created_at };
+      });
+    },
+    async countSubscribers() {
+      if (!adminSupabase) return 0;
+      var { count, error } = await adminSupabase.from('newsletter_subscribers').select('id', { count: 'exact', head: true });
+      if (error) throw error;
+      return count || 0;
+    },
+    async subscriberStats() {
+      if (!adminSupabase) return { total: 0, thisMonth: 0, bySource: {} };
+      var all = await adminSupabase.from('newsletter_subscribers').select('source, created_at, is_active');
+      var rows = all.data || [];
+      var now = new Date();
+      var monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      return {
+        total: rows.length,
+        active: rows.filter(function (r) { return r.is_active; }).length,
+        thisMonth: rows.filter(function (r) { return r.created_at >= monthStart; }).length,
+        bySource: rows.reduce(function (acc, r) { acc[r.source] = (acc[r.source] || 0) + 1; return acc; }, {})
+      };
+    },
+
+    // ---- Contacts ----
+    async contacts(opts) {
+      if (!adminSupabase) return [];
+      var q = adminSupabase.from('contacts').select('*').order('created_at', { ascending: false });
+      if (opts && opts.page && opts.pageSize) {
+        var start = (opts.page - 1) * opts.pageSize;
+        q = q.range(start, start + opts.pageSize - 1);
+      }
+      var { data, error } = await q;
+      if (error) throw error;
+      return (data || []).map(function (c) {
+        return { id: c.id, name: c.name, email: c.email, subject: c.subject || '', message: c.message || '', isRead: !!c.is_read, createdAt: c.created_at };
+      });
+    },
+    async countContacts() {
+      if (!adminSupabase) return 0;
+      var { count, error } = await adminSupabase.from('contacts').select('id', { count: 'exact', head: true });
+      if (error) throw error;
+      return count || 0;
+    },
+    async contactStats() {
+      if (!adminSupabase) return { total: 0, unread: 0, thisMonth: 0 };
+      var all = await adminSupabase.from('contacts').select('is_read, created_at');
+      var rows = all.data || [];
+      var now = new Date();
+      var monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      return {
+        total: rows.length,
+        unread: rows.filter(function (r) { return !r.is_read; }).length,
+        thisMonth: rows.filter(function (r) { return r.created_at >= monthStart; }).length
+      };
     }
   };
 
@@ -475,6 +542,22 @@
     if (error) throw error;
   }
 
+  // ---- Newsletter subscribers ----
+  async function toggleSubscriber(id, isActive) {
+    await adminSupabase.from('newsletter_subscribers').update({ is_active: isActive }).eq('id', id);
+  }
+  async function deleteSubscriber(id) {
+    await adminSupabase.from('newsletter_subscribers').delete().eq('id', id);
+  }
+
+  // ---- Contacts ----
+  async function markContactRead(id, isRead) {
+    await adminSupabase.from('contacts').update({ is_read: isRead }).eq('id', id);
+  }
+  async function deleteContact(id) {
+    await adminSupabase.from('contacts').delete().eq('id', id);
+  }
+
   function slugify(s) {
     return String(s || '')
       .toLowerCase()
@@ -603,6 +686,10 @@
   adminDB.deleteCoupon = deleteCoupon;
   adminDB.updateStock = updateStock;
   adminDB.updateOrderStatus = updateOrderStatus;
+  adminDB.toggleSubscriber = toggleSubscriber;
+  adminDB.deleteSubscriber = deleteSubscriber;
+  adminDB.markContactRead = markContactRead;
+  adminDB.deleteContact = deleteContact;
   adminDB.slugify = slugify;
   window.adminGate = adminGate;
   window.adminConfig = CFG;
