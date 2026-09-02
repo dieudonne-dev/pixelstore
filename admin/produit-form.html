@@ -227,16 +227,33 @@
           function handleFile(file) {
             if (!file.type.startsWith('image/')) { showToast('Veuillez sélectionner un fichier image.', 'error'); return; }
             if (file.size > MAX_SIZE) { showToast('L\'image dépasse la taille maximale de 5 Mo.', 'error'); return; }
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-              imageInput.value = ev.target.result;
-              imagePreview.src = ev.target.result;
-              imagePreviewWrap.style.display = 'flex';
-              dropZone.style.display = 'none';
-              showToast('Image chargée avec succès.');
-            };
-            reader.onerror = () => showToast('Impossible de lire ce fichier image.', 'error');
-            reader.readAsDataURL(file);
+            // Prévisualisation immédiate (objet local, sans charger le gros binaire en base).
+            const previewUrl = URL.createObjectURL(file);
+            imageInput.value = '';
+            imagePreview.src = previewUrl;
+            imagePreviewWrap.style.display = 'flex';
+            dropZone.style.display = 'none';
+
+            // Téléverse le fichier dans le bucket Storage (dès la sélection) afin
+            // de ne stocker en base qu'une URL publique légère, pas le base64.
+            uploadImage(file)
+              .then((publicUrl) => {
+                if (publicUrl) { imageInput.value = publicUrl; imagePreview.src = publicUrl; }
+                showToast(publicUrl ? 'Image téléversée dans le Storage.' : 'Image uploadée (URL de base conservée).');
+              })
+              .catch((err) => showToast((err && err.message) || 'Échec du téléversement de l\'image.', 'error'));
+          }
+
+          async function uploadImage(file) {
+            const storage = (window.adminSupabase && window.adminSupabase.storage) ? window.adminSupabase.storage : null;
+            if (!storage) throw new Error('Stockage indisponible.');
+            const bucket = storage.from('product-images');
+            const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+            const path = 'products/' + Date.now() + '-' + Math.round(Math.random() * 1e6) + '.' + ext;
+            const { error } = await bucket.upload(path, file, { contentType: file.type, upsert: false });
+            if (error) throw new Error(error.message || 'Erreur Storage.');
+            const { data } = bucket.getPublicUrl(path);
+            return data ? data.publicUrl : null;
           }
 
           if (imageInput.value) dropZone.style.display = 'none';

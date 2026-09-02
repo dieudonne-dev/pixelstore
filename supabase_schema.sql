@@ -877,3 +877,38 @@ UPDATE public.users
 -- insertion SANS id repartirait de 1 → violation de clé primaire (products_pkey).
 -- Cette ligne remet la séquence au-dessus du max actuel, ce qui la corrige.
 SELECT setval('products_id_seq', GREATEST((SELECT COALESCE(MAX(id), 1) FROM public.products), 1));
+
+-- ============================================================
+-- STORAGE — bucket public pour les images de produits
+-- Les images téléversées depuis l'admin sont envoyées dans ce bucket (fichiers
+-- légers). La table product_images.image_url ne stocke alors que l'URL publique
+-- (~200 octets) au lieu d'un data URI base64 de plusieurs Mo.
+-- EXÉCUTER APRÈS avoir créé le bucket dans le dashboard :
+--   Storage → New bucket « product-images » → PUBLIC ✅
+-- Ces policies permettent l'écriture dans le bucket pour les utilisateurs
+-- authentifiés (dont l'admin) et la lecture publique.
+-- ============================================================
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('product-images', 'product-images', true)
+ON CONFLICT (id) DO UPDATE SET public = EXCLUDED.public;
+
+DROP POLICY IF EXISTS "product-images-public-read" ON storage.objects;
+CREATE POLICY "product-images-public-read"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'product-images');
+
+DROP POLICY IF EXISTS "product-images-auth-insert" ON storage.objects;
+CREATE POLICY "product-images-auth-insert"
+  ON storage.objects FOR INSERT
+  WITH CHECK (bucket_id = 'product-images' AND auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "product-images-auth-update" ON storage.objects;
+CREATE POLICY "product-images-auth-update"
+  ON storage.objects FOR UPDATE
+  USING (bucket_id = 'product-images' AND auth.role() = 'authenticated')
+  WITH CHECK (bucket_id = 'product-images' AND auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "product-images-auth-delete" ON storage.objects;
+CREATE POLICY "product-images-auth-delete"
+  ON storage.objects FOR DELETE
+  USING (bucket_id = 'product-images' AND auth.role() = 'authenticated');
