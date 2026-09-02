@@ -152,12 +152,31 @@
   // HELPERS DE LECTURE / ÉCRITURE (tableaux)
   // ==========================================================================
   var adminDB = {
+    // Renvoie un map product_id -> image principale, en n'incluant QUE les
+    // images légères (chemins relatifs img/...). Les data URI base64 géants
+    // (image_url commençant par "data:") sont volontairement exclus via le
+    // filtre SQL not.ilike('data:%') : ils ne transitent jamais dans les
+    // listings, ce qui évite de saturer le réseau.
+    async imagesByProduct() {
+      if (!adminSupabase) return {};
+      var { data, error } = await adminSupabase.from('product_images')
+        .select('product_id, image_url, sort_order')
+        .not('image_url', 'ilike', 'data:%')
+        .order('sort_order');
+      if (error) throw error;
+      var map = {};
+      (data || []).forEach(function (img) {
+        if (!img || !img.image_url) return;
+        if (!(img.product_id in map)) map[img.product_id] = img.image_url;
+      });
+      return map;
+    },
+
     async products(opts) {
       if (!adminSupabase) return [];
-      // Les images (image_url) sont des data URI base64 parfois énormes : on ne
-      // les charge PAS dans les listings (page produits, stock) pour ne pas
-      // saturer le réseau. La version complète (avec image) est obtenue au cas
-      // par cas via productById() pour l'édition.
+      // Les images de la base peuvent être des data URI base64 énormes. On ne les
+      // transporte donc JAMAIS dans les listings : on charge séparément, et en
+      // parallèle, uniquement les images légères (img/...) via imagesByProduct().
       var q = adminSupabase.from('products')
         .select('id, name, slug, reference, tag, price, old_price, rating, description, is_active, brand:brand_id(name), category:category_id(slug, name), stock:stock(quantity)')
         .order('id');
@@ -165,7 +184,7 @@
         var start = (opts.page - 1) * opts.pageSize;
         q = q.range(start, start + opts.pageSize - 1);
       }
-      var { data, error } = await q;
+      var [ { data, error }, imgMap ] = await Promise.all([ q, this.imagesByProduct() ]);
       if (error) throw error;
       return (data || []).map(function (p) {
         return {
@@ -176,7 +195,7 @@
           category: (p.category && p.category.slug) || 'ordinateurs',
           categoryName: (p.category && p.category.name) || '',
           stock: (p.stock && p.stock.length ? p.stock[0].quantity : 0) || 0,
-          image: ''
+          image: imgMap[p.id] || ''
         };
       });
     },

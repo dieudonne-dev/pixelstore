@@ -149,7 +149,7 @@
                   </div>
                   <input type="file" id="fImageFile" accept="image/*" hidden>
                   <input type="hidden" id="fImage" value="${v.image}">
-                  <span class="hint">L'image sélectionnée est intégrée directement au produit (format base64).</span>
+                  <span class="hint">L'image est automatiquement redimensionnée et compressée côté client.</span>
                   <div id="imagePreviewWrap" style="display:${v.image ? 'flex' : 'none'};align-items:center;gap:16px;margin-top:14px">
                     <img class="upload-preview" id="imagePreview" src="${window.adminResolveImage(v.image)}" alt="Aperçu">
                     <button type="button" class="btn btn-danger btn-sm" id="removeImage">Retirer l'image</button>
@@ -227,33 +227,48 @@
           function handleFile(file) {
             if (!file.type.startsWith('image/')) { showToast('Veuillez sélectionner un fichier image.', 'error'); return; }
             if (file.size > MAX_SIZE) { showToast('L\'image dépasse la taille maximale de 5 Mo.', 'error'); return; }
-            // Prévisualisation immédiate (objet local, sans charger le gros binaire en base).
-            const previewUrl = URL.createObjectURL(file);
-            imageInput.value = '';
-            imagePreview.src = previewUrl;
-            imagePreviewWrap.style.display = 'flex';
-            dropZone.style.display = 'none';
-
-            // Téléverse le fichier dans le bucket Storage (dès la sélection) afin
-            // de ne stocker en base qu'une URL publique légère, pas le base64.
-            uploadImage(file)
-              .then((publicUrl) => {
-                if (publicUrl) { imageInput.value = publicUrl; imagePreview.src = publicUrl; }
-                showToast(publicUrl ? 'Image téléversée dans le Storage.' : 'Image uploadée (URL de base conservée).');
-              })
-              .catch((err) => showToast((err && err.message) || 'Échec du téléversement de l\'image.', 'error'));
+            compressImage(file).then((optimized) => {
+              imageInput.value = optimized.dataUrl;
+              imagePreview.src = optimized.dataUrl;
+              imagePreviewWrap.style.display = 'flex';
+              dropZone.style.display = 'none';
+              showToast('Image optimisée (' + Math.round(optimized.size / 1024) + ' Ko).');
+            }).catch(() => showToast('Impossible d\'optimiser cette image.', 'error'));
           }
 
-          async function uploadImage(file) {
-            const storage = (window.adminSupabase && window.adminSupabase.storage) ? window.adminSupabase.storage : null;
-            if (!storage) throw new Error('Stockage indisponible.');
-            const bucket = storage.from('product-images');
-            const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-            const path = 'products/' + Date.now() + '-' + Math.round(Math.random() * 1e6) + '.' + ext;
-            const { error } = await bucket.upload(path, file, { contentType: file.type, upsert: false });
-            if (error) throw new Error(error.message || 'Erreur Storage.');
-            const { data } = bucket.getPublicUrl(path);
-            return data ? data.publicUrl : null;
+          // Redimensionne et compresse l'image via <canvas> pour ne stocker en
+          // base qu'un data URI léger (au lieu d'un base64 brut de plusieurs Mo).
+          // Aucune dépendance : fonctionne avec l'existant, sans Storage ni SQL.
+          function compressImage(file) {
+            return new Promise((resolve, reject) => {
+              const objectUrl = URL.createObjectURL(file);
+              const img = new Image();
+              img.onload = () => {
+                const MAX_W = 1000;
+                const MAX_H = 1000;
+                let { width, height } = img;
+                const ratio = Math.min(1, Math.min(MAX_W / width, MAX_H / height));
+                width = Math.round(width * ratio);
+                height = Math.round(height * ratio);
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                URL.revokeObjectURL(objectUrl);
+                let quality = 0.82;
+                let dataUrl = canvas.toDataURL('image/jpeg', quality);
+                // Si la taille dépasse encore ~400 Ko, on réduit la qualité.
+                let estimated = Math.round((dataUrl.length * 3) / 4);
+                while (estimated > 400 * 1024 && quality > 0.4) {
+                  quality -= 0.15;
+                  dataUrl = canvas.toDataURL('image/jpeg', quality);
+                  estimated = Math.round((dataUrl.length * 3) / 4);
+                }
+                resolve({ dataUrl, size: estimated });
+              };
+              img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('Lecture image échouée')); };
+              img.src = objectUrl;
+            });
           }
 
           if (imageInput.value) dropZone.style.display = 'none';
