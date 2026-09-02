@@ -24,10 +24,31 @@ themeToggleBtn.addEventListener('click', () => {
 
 // ==================== NEWSLETTER ====================
 
+// Attend que l'instance Supabase (chargée en async via le CDN) soit prête.
+function waitSupabase(timeout) {
+  return new Promise((resolve, reject) => {
+    if (typeof supabase !== 'undefined' && supabase) { resolve(supabase); return; }
+    const t = setTimeout(() => reject(new Error('Supabase indisponible')), timeout || 8000);
+    document.addEventListener('supabase:ready', () => { clearTimeout(t); resolve(supabase); }, { once: true });
+  });
+}
+
+// Garantit que la promesse réseau se résout dans un délai max (réactive le
+// bouton même si la requête vers Supabase pend à cause d'un réseau lent).
+function withTimeout(promise, ms) {
+  return new Promise((resolve) => {
+    const t = setTimeout(() => resolve({ error: { code: 'TIMEOUT', message: 'Délai dépassé' } }), ms);
+    Promise.resolve(promise).then(
+      (v) => { clearTimeout(t); resolve(v); },
+      (e) => { clearTimeout(t); resolve({ error: e && e.message ? e : e }); }
+    );
+  });
+}
+
 const newsletterForm = document.getElementById('newsletter-form');
 
 if (newsletterForm) {
-  newsletterForm.addEventListener('submit', (e) => {
+  newsletterForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = newsletterForm.querySelector('input[type="email"]');
     const btn = newsletterForm.querySelector('button');
@@ -36,28 +57,24 @@ if (newsletterForm) {
 
     btn.disabled = true;
     btn.textContent = 'Envoi...';
-
-    const doInsert = () => {
-      supabase.from('newsletter_subscribers')
-        .insert({ email: val, source: 'footer' })
-        .then(({ error }) => {
-          if (error && error.code === '23505') {
-            alert('Vous êtes déjà inscrit !');
-          } else if (error) {
-            alert('Une erreur est survenue. Réessayez.');
-          } else {
-            alert('Merci pour votre inscription !');
-          }
-          newsletterForm.reset();
-          btn.disabled = false;
-          btn.textContent = 'S\'abonner';
-        });
-    };
-
-    if (typeof supabase !== 'undefined' && supabase) {
-      doInsert();
-    } else {
-      alert('Service temporairement indisponible. Réessayez plus tard.');
+    try {
+      const sup = await waitSupabase();
+      const result = await withTimeout(sup.from('newsletter_subscribers').insert({ email: val, source: 'footer' }), 12000);
+      if (result && result.error) {
+        if (result.error.code === '23505') {
+          alert('Vous êtes déjà inscrit !');
+        } else if (result.error.code === 'TIMEOUT') {
+          alert('Délai dépassé. Vérifiez votre connexion et réessayez.');
+        } else {
+          alert('Une erreur est survenue. Réessayez.');
+        }
+      } else {
+        alert('Merci pour votre inscription !');
+      }
+      newsletterForm.reset();
+    } catch (err) {
+      alert('Service temporairement indisponible. Vérifiez votre connexion et réessayez.');
+    } finally {
       btn.disabled = false;
       btn.textContent = 'S\'abonner';
     }
@@ -69,7 +86,7 @@ if (newsletterForm) {
 const contactForm = document.getElementById('contact-form');
 
 if (contactForm) {
-  contactForm.addEventListener('submit', (e) => {
+  contactForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const nameEl = contactForm.querySelector('input[name="name"]') || contactForm.querySelector('#name');
     const emailEl = contactForm.querySelector('input[name="email"]') || contactForm.querySelector('#email');
@@ -91,26 +108,23 @@ if (contactForm) {
 
     btn.disabled = true;
     btn.textContent = 'Envoi en cours...';
-
-    const doInsert = () => {
-      supabase.from('contacts')
-        .insert(payload)
-        .then(({ error }) => {
-          if (error) {
-            alert('Une erreur est survenue. Réessayez.');
-          } else {
-            alert('Message envoyé ! Nous vous répondrons rapidement.');
-            contactForm.reset();
-          }
-          btn.disabled = false;
-          btn.textContent = 'Envoyer le message';
-        });
-    };
-
-    if (typeof supabase !== 'undefined' && supabase) {
-      doInsert();
-    } else {
-      alert('Service temporairement indisponible. Réessayez plus tard.');
+    try {
+      const sup = await waitSupabase();
+      const payloadCopy = Object.assign({}, payload);
+      const result = await withTimeout(sup.from('contacts').insert(payloadCopy), 12000);
+      if (result && result.error) {
+        if (result.error.code === 'TIMEOUT') {
+          alert('Délai dépassé. Vérifiez votre connexion et réessayez.');
+        } else {
+          alert('Une erreur est survenue. Réessayez.');
+        }
+      } else {
+        alert('Message envoyé ! Nous vous répondrons rapidement.');
+        contactForm.reset();
+      }
+    } catch (err) {
+      alert('Service temporairement indisponible. Vérifiez votre connexion et réessayez.');
+    } finally {
       btn.disabled = false;
       btn.textContent = 'Envoyer le message';
     }
