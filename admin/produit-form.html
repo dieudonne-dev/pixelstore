@@ -29,8 +29,7 @@
           let product = null;
           let isEdit = false;
           if (editId) {
-            const all = await adminDB.products();
-            product = all.find(p => p.id === editId) || null;
+            product = await adminDB.productById(editId);
             isEdit = !!product;
           }
 

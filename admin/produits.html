@@ -81,6 +81,16 @@
         const tbody = document.getElementById('productsBody');
         const searchInput = document.getElementById('searchInput');
         const categoryFilter = document.getElementById('categoryFilter');
+        const PAGE_SIZE = 12;
+        let currentPage = 1;
+
+        function paginated(list) {
+          const total = list.length;
+          const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+          if (currentPage > totalPages) currentPage = totalPages;
+          const start = (currentPage - 1) * PAGE_SIZE;
+          return { rows: list.slice(start, start + PAGE_SIZE), total, totalPages };
+        }
 
         function renderProducts() {
           let list = allProducts;
@@ -114,13 +124,17 @@
             return;
           }
 
-          tbody.innerHTML = list.map(p => {
+          const { rows, total, totalPages } = paginated(list);
+
+          tbody.innerHTML = rows.map(p => {
             const cat = allCategories.find(c => c.slug === p.category);
             return `
               <tr>
                 <td>
                   <div class="table-product">
-                    <img src="${window.adminResolveImage(p.image)}" alt="${p.name}">
+                    ${p.image
+                      ? `<img src="${window.adminResolveImage(p.image)}" alt="${p.name}">`
+                      : '<div class="prod-thumb placeholder"><span>N/A</span></div>'}
                     <div>
                       <strong>${p.name}</strong>
                       <span>${p.reference}</span>
@@ -150,7 +164,15 @@
                 </td>
               </tr>
             `;
-          }).join('');
+          }).join('') +
+          (totalPages > 1 ? `
+            <tr><td colspan="7">
+              <div class="table-pagination">
+                <button class="btn btn-secondary btn-sm page-prev" ${currentPage <= 1 ? 'disabled' : ''}>‹ Précédent</button>
+                <span>Page ${currentPage} / ${totalPages}</span>
+                <button class="btn btn-secondary btn-sm page-next" ${currentPage >= totalPages ? 'disabled' : ''}>Suivant ›</button>
+              </div>
+            </td></tr>` : '');
         }
 
         async function load() {
@@ -163,14 +185,21 @@
           renderProducts();
         }
 
-        searchInput.addEventListener('input', (e) => { currentSearch = e.target.value; renderProducts(); });
-        categoryFilter.addEventListener('change', (e) => { currentCategory = e.target.value; renderProducts(); });
+        searchInput.addEventListener('input', (e) => { currentSearch = e.target.value; currentPage = 1; renderProducts(); });
+        categoryFilter.addEventListener('change', (e) => { currentCategory = e.target.value; currentPage = 1; renderProducts(); });
+        content.addEventListener('click', (e) => {
+          const prev = e.target.closest('.page-prev');
+          const next = e.target.closest('.page-next');
+          if (prev && currentPage > 1) { currentPage -= 1; renderProducts(); }
+          if (next) { currentPage += 1; renderProducts(); }
+        });
 
         content.querySelectorAll('.kpi-chip').forEach(chip => {
           chip.addEventListener('click', () => {
             content.querySelectorAll('.kpi-chip').forEach(c => c.classList.remove('active'));
             chip.classList.add('active');
             currentStatus = chip.dataset.filter;
+            currentPage = 1;
             renderProducts();
           });
         });

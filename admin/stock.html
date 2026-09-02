@@ -137,7 +137,9 @@
               <tr>
                 <td>
                   <div class="table-product">
-                    <img src="${window.adminResolveImage(p.image)}" alt="${p.name}">
+                    ${p.image
+                      ? `<img src="${window.adminResolveImage(p.image)}" alt="${p.name}">`
+                      : '<div class="prod-thumb placeholder"><span>N/A</span></div>'}
                     <div>
                       <strong>${p.name}</strong>
                       <span>${p.brand}</span>
@@ -177,7 +179,9 @@
           document.getElementById('stockModalBody').innerHTML = `
             <div class="detail-panel">
               <div class="aside-row">
-                <img src="${window.adminResolveImage(product.image)}" alt="${product.name}" style="width:64px;height:64px;border-radius:10px;object-fit:cover">
+                ${product.image
+                  ? `<img src="${window.adminResolveImage(product.image)}" alt="${product.name}" style="width:64px;height:64px;border-radius:10px;object-fit:cover">`
+                  : '<div class="prod-thumb placeholder" style="width:64px;height:64px;border-radius:10px;font-size:12px"><span>N/A</span></div>'}
                 <div>
                   <p><strong>${product.name}</strong></p>
                   <span>${product.reference} • ${formatPrice(product.price)}</span>

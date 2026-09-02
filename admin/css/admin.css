@@ -763,6 +763,25 @@ table.admin-table {
   border: 1px solid var(--border-color);
 }
 
+.prod-thumb.placeholder {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  border: 1px dashed var(--border-color);
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.prod-thumb.placeholder span {
+  font-size: 0.7rem;
+}
+
 .table-product strong {
   display: block;
   font-size: 0.9rem;
@@ -776,6 +795,16 @@ table.admin-table {
 .price-text {
   font-weight: 600;
   white-space: nowrap;
+}
+
+.table-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  padding: 8px 4px;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
 }
 
 .aside-row {

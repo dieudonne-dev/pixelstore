@@ -152,14 +152,22 @@
   // HELPERS DE LECTURE / ÉCRITURE (tableaux)
   // ==========================================================================
   var adminDB = {
-    async products() {
+    async products(opts) {
       if (!adminSupabase) return [];
-      var { data, error } = await adminSupabase.from('products')
-        .select('id, name, slug, reference, tag, price, old_price, rating, description, is_active, brand:brand_id(name), category:category_id(slug, name), stock:stock(quantity), images:product_images(image_url, sort_order)')
+      // Les images (image_url) sont des data URI base64 parfois énormes : on ne
+      // les charge PAS dans les listings (page produits, stock) pour ne pas
+      // saturer le réseau. La version complète (avec image) est obtenue au cas
+      // par cas via productById() pour l'édition.
+      var q = adminSupabase.from('products')
+        .select('id, name, slug, reference, tag, price, old_price, rating, description, is_active, brand:brand_id(name), category:category_id(slug, name), stock:stock(quantity)')
         .order('id');
+      if (opts && opts.page && opts.pageSize) {
+        var start = (opts.page - 1) * opts.pageSize;
+        q = q.range(start, start + opts.pageSize - 1);
+      }
+      var { data, error } = await q;
       if (error) throw error;
       return (data || []).map(function (p) {
-        var main = (p.images || []).slice().sort(function (a, b) { return a.sort_order - b.sort_order; })[0];
         return {
           id: p.id, name: p.name, reference: p.reference, tag: p.tag, price: Number(p.price) || 0,
           oldPrice: p.old_price != null ? Number(p.old_price) : null, rating: Number(p.rating) || 0,
@@ -168,9 +176,44 @@
           category: (p.category && p.category.slug) || 'ordinateurs',
           categoryName: (p.category && p.category.name) || '',
           stock: (p.stock && p.stock.length ? p.stock[0].quantity : 0) || 0,
-          image: (main && main.image_url) || ''
+          image: ''
         };
       });
+    },
+
+    async countProducts() {
+      if (!adminSupabase) return 0;
+      var { count, error } = await adminSupabase.from('products').select('id', { count: 'exact', head: true });
+      if (error) throw error;
+      return count || 0;
+    },
+
+    // Charge UN produit complet (avec son image principale) pour l'édition.
+    // Utile car product_images.image_url peut être un data URI base64 énorme :
+    // on ne récupère que le produit demandé, pas toute la galerie.
+    async productById(id) {
+      if (!adminSupabase) return null;
+      var { data, error } = await adminSupabase.from('products')
+        .select('id, name, slug, reference, tag, price, old_price, rating, description, is_active, is_featured, brand:brand_id(name), category:category_id(slug, name), stock:stock(quantity), images:product_images(image_url, sort_order, is_main)')
+        .eq('id', id)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return null;
+      var main = (data.images || []).slice().sort(function (a, b) {
+        return (b.is_main ? 1 : 0) - (a.is_main ? 1 : 0) || a.sort_order - b.sort_order;
+      })[0];
+      return {
+        id: data.id, name: data.name, reference: data.reference, tag: data.tag,
+        price: Number(data.price) || 0,
+        oldPrice: data.old_price != null ? Number(data.old_price) : null,
+        rating: Number(data.rating) || 0, description: data.description || '',
+        active: !!data.is_active, featured: !!data.is_featured,
+        brand: (data.brand && data.brand.name) || 'PixelStore',
+        category: (data.category && data.category.slug) || 'ordinateurs',
+        categoryName: (data.category && data.category.name) || '',
+        stock: (data.stock && data.stock.length ? data.stock[0].quantity : 0) || 0,
+        image: (main && main.image_url) || ''
+      };
     },
 
     async categories() {
