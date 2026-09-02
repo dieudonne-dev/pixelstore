@@ -114,60 +114,149 @@ function initNotifications() {
   const trigger = document.querySelector('.topbar-actions .topbar-icon[title="Notifications"]');
   if (!trigger) return;
 
-  const items = [
-    { icon: ICONS.orders, text: 'Nouvelle commande <strong>PS-20260829-001</strong>', time: 'il y a 15 min', type: 'green' },
-    { icon: ICONS.products, text: 'Produit <strong>PixelGPU RTX 4070</strong> mis à jour', time: 'il y a 1 h', type: 'blue' },
-    { icon: ICONS.customers, text: 'Nouveau client <strong>Chantal Irankunda</strong>', time: 'il y a 3 h', type: 'blue' },
-    { icon: ICONS.stock, text: 'Stock faible : <strong>PixelGPU RTX 4070</strong>', time: 'il y a 5 h', type: 'red' },
-    { icon: ICONS.coupons, text: 'Code promo <strong>VIPPIXEL</strong> créé', time: 'hier', type: 'violet' }
-  ];
+  const colorMap = { message: 'blue', order: 'green', customer: 'blue', newsletter: 'violet', stock: 'red' };
 
-  trigger.addEventListener('click', (e) => {
-    e.stopPropagation();
-    let panel = document.querySelector('.notif-panel');
-    if (panel) {
-      panel.remove();
-      return;
+  function timeAgo(ts) {
+    if (!ts) return '';
+    const s = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
+    if (s < 60) return 'à l\'instant';
+    const m = Math.floor(s / 60); if (m < 60) return 'il y a ' + m + ' min';
+    const h = Math.floor(m / 60); if (h < 24) return 'il y a ' + h + ' h';
+    const d = Math.floor(h / 24); return 'il y a ' + d + ' j';
+  }
+
+  function notificationLabel(n) {
+    const labels = {
+      message: 'Message', order: 'Commande', customer: 'Client',
+      newsletter: 'Abonné', stock: 'Stock'
+    };
+    return labels[n.type] || 'Événement';
+  }
+
+  // Met à jour le compteur sur la cloche.
+  function renderBadge(unreadCount) {
+    let badge = trigger.querySelector('.badge-dot');
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'badge-dot';
+      trigger.appendChild(badge);
     }
+    if (unreadCount > 0) {
+      badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+      badge.style.cssText = 'display:flex;align-items:center;justify-content:center;position:absolute;top:4px;right:4px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--accent-red);border:2px solid var(--bg-secondary);font-size:0.6rem;font-weight:700;color:#fff;';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
 
-    panel = document.createElement('div');
+  function buildPanel(notifs) {
+    const panel = document.createElement('div');
     panel.className = 'notif-panel';
+    const unread = notifs.filter(n => n.unread).length;
+    const list = notifs.slice(0, 25);
     panel.innerHTML = `
       <div class="notif-header">
         <strong>Notifications</strong>
-        <span>${items.length} non lues</span>
+        <span>${unread} non lue${unread > 1 ? 's' : ''}</span>
       </div>
       <div class="notif-list">
-        ${items.map(n => `
-          <div class="notif-item">
-            <div class="notif-icon ${n.type}">${n.icon}</div>
+        ${list.map(n => `
+          <div class="notif-item${n.unread ? ' is-unread' : ''}">
+            <div class="notif-icon ${colorMap[n.type] || 'blue'}">${ICONS[n.icon] || ICONS.bell}</div>
             <div class="notif-body">
-              <p>${n.text}</p>
-              <span>${n.time}</span>
+              <p>${notificationLabel(n)} — <strong>${escapeHtml(n.title)}</strong></p>
+              <span>${escapeHtml(n.meta || '')} · ${timeAgo(n.time)}</span>
             </div>
+            <button class="notif-open" title="${n.type === 'message' ? 'Ouvrir la boîte de réception' : 'Voir les détails'}">${n.type === 'message' ? 'Lire' : 'Ouvrir'}</button>
           </div>
         `).join('')}
       </div>
-      <button class="btn btn-ghost btn-sm notif-mark">Tout marquer comme lu</button>
+      ${list.length ? '<button class="btn btn-ghost btn-sm notif-mark">Marquer comme lu</button>' : ''}
     `;
+    if (!notifs.length) {
+      panel.querySelector('.notif-list').innerHTML = '<div class="empty-state" style="padding:24px"><h3>Aucune notification</h3><p>Tout est calme sur le site.</p></div>';
+    }
+    return panel;
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  async function refresh() {
+    try {
+      if (!window.adminDB || typeof window.adminDB.getNotifications !== 'function') return;
+      notifs = await window.adminDB.getNotifications() || [];
+      const unreadCount = notifs.filter(n => n.unread).length;
+      renderBadge(unreadCount);
+    } catch (e) { /* non connecté ou erreur réseau : on ignore */ }
+  }
+
+  let notifs = [];
+
+  // Masque le point rouge par défaut (avant toute donnée réelle chargée)
+  renderBadge(0);
+
+  // Premier chargement si l'admin est déjà prêt, sinon on repollera.
+  if (window.adminAuth && window.adminAuth.getUser && window.adminAuth.getUser()) {
+    refresh();
+  }
+
+  // Couvre aussi la connexion après l'écran de login.
+  if (window.adminAuth && window.adminAuth.onAuthChange) {
+    window.adminAuth.onAuthChange(function (u) { if (u && u.isAdmin) refresh(); });
+  }
+
+  // Écoute en continu (polling) pour notifier les événements du site.
+  setInterval(refresh, 30000);
+
+  trigger.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    let panel = document.querySelector('.notif-panel');
+    if (panel) { panel.remove(); return; }
+
+    // On force un rafraîchissement juste avant d'ouvrir.
+    try { notifs = await window.adminDB.getNotifications() || []; } catch (err) { notifs = notifs || []; }
+
+    panel = buildPanel(notifs);
     document.body.appendChild(panel);
 
-    // Positionne le panneau sous la cloche
     const rect = trigger.getBoundingClientRect();
     panel.style.top = (rect.bottom + 8) + 'px';
     panel.style.right = (window.innerWidth - rect.right) + 'px';
 
-    // Retire le point rouge
-    const dot = trigger.querySelector('.badge-dot');
-    if (dot) dot.style.display = 'none';
-
-    panel.querySelector('.notif-mark').addEventListener('click', (e) => {
-      e.stopPropagation();
-      panel.remove();
-      const badge = trigger.querySelector('.badge-dot');
-      if (badge) badge.style.display = 'none';
-      showToast('Toutes les notifications ont été marquées comme lues.');
+    panel.querySelectorAll('.notif-item').forEach((el, i) => {
+      el.style.cursor = 'pointer';
+      const open = (ev) => {
+        ev.stopPropagation();
+        const n = notifs[i];
+        if (!n) return;
+        if (n.type === 'message') { window.location.href = 'contacts.html?id=' + encodeURIComponent(n.id); return; }
+        if (n.link) { window.location.href = n.link; }
+      };
+      el.addEventListener('click', open);
+      const btn = el.querySelector('.notif-open');
+      if (btn) btn.addEventListener('click', open);
     });
+
+    const markBtn = panel.querySelector('.notif-mark');
+    if (markBtn) {
+      markBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        // Marque les messages non lus comme lus (le reste est historique).
+        const msgIds = notifs.filter(n => n.type === 'message' && n.unread).map(n => n.id);
+        if (msgIds.length && window.adminDB && window.adminDB.markAllMessagesRead) {
+          window.adminDB.markAllMessagesRead(msgIds).then(() => { refresh(); }).catch(() => {});
+        } else {
+          refresh();
+        }
+        panel.remove();
+        renderBadge(0);
+        showToast('Messages marqués comme lus.');
+      });
+    }
   });
 
   // Ferme le panneau au clic ailleurs / Échap

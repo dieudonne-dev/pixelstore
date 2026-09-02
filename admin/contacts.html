@@ -270,9 +270,23 @@
             ]);
             renderStats();
             renderContacts();
+            autoOpenFromUrl();
           } catch (err) {
             showToast('Erreur de chargement.', 'error');
           }
+        }
+
+        // Ouvre directement un message depuis la cloche (?id=...)
+        let autoOpenHandled = false;
+        function autoOpenFromUrl() {
+          const idParam = new URLSearchParams(window.location.search).get('id');
+          if (!idParam || autoOpenHandled) return;
+          const contact = contacts.find(x => String(x.id) === String(idParam));
+          if (!contact) return;
+          autoOpenHandled = true;
+          openView(contact);
+          // Nettoie l'URL pour éviter de rouvrir ce message en cas de rechargement
+          history.replaceState(null, '', window.location.pathname);
         }
 
         adminGate(content, load);

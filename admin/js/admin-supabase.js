@@ -365,6 +365,93 @@
         unread: rows.filter(function (r) { return !r.is_read; }).length,
         thisMonth: rows.filter(function (r) { return r.created_at >= monthStart; }).length
       };
+    },
+
+    // ---- Notifications (événements récents du site pour la cloche) ----
+    // Renvoie une liste d'événements : messages non lus, nouvelles commandes,
+    // nouveaux clients/abonnés, stock faible. Chaque item a :
+    //   { type, title, meta, time, unread, icon, link }
+    async getNotifications() {
+      if (!adminSupabase) return [];
+      var out = [];
+      var now = new Date();
+      var dayAgo = new Date(now.getTime() - 24 * 3600 * 1000).toISOString();
+
+      // Messages non lus (priorité haute)
+      var m = await adminSupabase.from('contacts').select('id, name, email, subject, is_read, created_at').order('created_at', { ascending: false }).limit(20);
+      (m.data || []).forEach(function (c) {
+        out.push({
+          id: c.id, type: 'message', unread: !c.is_read, icon: 'contacts',
+          title: (c.name || 'Visiteur') + (c.subject ? ' — ' + c.subject : ''),
+          meta: c.email, time: c.created_at,
+          link: 'contacts.html', target: 'message'
+        });
+      });
+
+      // Nouvelles commandes récentes
+      try {
+        var o = await adminSupabase.from('orders')
+          .select('id, order_number, status, created_at, user:users(email)')
+          .gte('created_at', dayAgo)
+          .order('created_at', { ascending: false }).limit(20);
+        (o.data || []).forEach(function (od) {
+          out.push({
+            type: 'order', unread: true, icon: 'orders',
+            title: 'Nouvelle commande ' + (od.order_number || '#' + od.id),
+            meta: (od.user && od.user.email) || 'Client anonyme',
+            time: od.created_at, link: 'commandes.html', target: 'order'
+          });
+        });
+      } catch (e) { /* ignore */ }
+
+      // Nouveaux clients récents
+      try {
+        var u = await adminSupabase.from('users')
+          .select('id, email, created_at').gte('created_at', dayAgo)
+          .order('created_at', { ascending: false }).limit(10);
+        (u.data || []).forEach(function (us) {
+          out.push({
+            type: 'customer', unread: true, icon: 'customers',
+            title: 'Nouveau client', meta: us.email,
+            time: us.created_at, link: 'clients.html', target: 'customer'
+          });
+        });
+      } catch (e) { /* ignore */ }
+
+      // Nouveaux abonnés newsletter récents
+      try {
+        var s = await adminSupabase.from('newsletter_subscribers')
+          .select('id, email, created_at').gte('created_at', dayAgo)
+          .order('created_at', { ascending: false }).limit(10);
+        (s.data || []).forEach(function (sub) {
+          out.push({
+            type: 'newsletter', unread: true, icon: 'newsletter',
+            title: 'Nouvel abonné newsletter', meta: sub.email,
+            time: sub.created_at, link: 'abonnes.html', target: 'subscriber'
+          });
+        });
+      } catch (e) { /* ignore */ }
+
+      // Stock faible
+      try {
+        var st = await adminSupabase.from('products')
+          .select('id, name, stock:stock(quantity, low_stock_threshold)');
+        (st.data || []).forEach(function (p) {
+          var s = (p.stock && p.stock[0]) || { quantity: 0, low_stock_threshold: 5 };
+          if ((Number(s.quantity) || 0) <= (Number(s.low_stock_threshold) || 5)) {
+            out.push({
+              type: 'stock', unread: true, icon: 'stock',
+              title: 'Stock faible : ' + (p.name || 'Produit #' + p.id),
+              meta: (Number(s.quantity) || 0) + ' restant(s)', time: now.toISOString(),
+              link: 'stock.html', target: 'stock'
+            });
+          }
+        });
+      } catch (e) { /* ignore */ }
+
+      // Trie par date décroissante (les plus récentes d'abord)
+      out.sort(function (a, b) { return (b.time < a.time) ? -1 : (b.time > a.time ? 1 : 0); });
+      return out.slice(0, 30);
     }
   };
 
@@ -554,6 +641,10 @@
   async function markContactRead(id, isRead) {
     await adminSupabase.from('contacts').update({ is_read: isRead }).eq('id', id);
   }
+  async function markAllMessagesRead(ids) {
+    if (!ids || !ids.length) return;
+    await adminSupabase.from('contacts').update({ is_read: true }).in('id', ids);
+  }
   async function deleteContact(id) {
     await adminSupabase.from('contacts').delete().eq('id', id);
   }
@@ -689,6 +780,7 @@
   adminDB.toggleSubscriber = toggleSubscriber;
   adminDB.deleteSubscriber = deleteSubscriber;
   adminDB.markContactRead = markContactRead;
+  adminDB.markAllMessagesRead = markAllMessagesRead;
   adminDB.deleteContact = deleteContact;
   adminDB.slugify = slugify;
   window.adminGate = adminGate;
