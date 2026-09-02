@@ -28,25 +28,37 @@
 ## 4. Architecture & fichiers clés
 
 ### Frontend (racine)
-- `js/supabase-config.js` : client Supabase (URL + clé anon, CDN).
+- `js/supabase-config.js` : client Supabase (URL + clé anon). Détecte le SDK local UMD (`window.supabase.createClient`) **puis** le CDN en secours — corrige le blocage « Service temporairement indisponible ». SDK local : `js/vendor/supabase.min.js` (v2.112.4 UMD).
+- `js/main.js` : handlers **newsletter** + **contact** robustes (`waitSupabase()`, `withTimeout()` → alerte « Délai dépassé », `try/catch/finally` pour réactiver le bouton).
 - `js/api.js` : couche d'accès données avec **fallback local** (`waitForSupabase()`) ; helpers panier DB `getOrCreateCart`/`syncCartToDb`/`loadCartFromDb`.
 - `js/auth.js` : auth front (inscription/connexion/déconnexion, modale injectée, menu `.header-actions`, `window.PixelAuth` / `window.storeUser` / `window.onUserChange`, sync panier). API : `resetPasswordForEmail`, `extractErrorMessage` (messages FR).
 - `js/filters.js`, `js/fiche.js` : catalogue asynchrone.
 - `js/checkout.js` + `checkout.html` : panier localStorage → DB → RPC `create_order`.
 - `js/commandes.js` + `commandes.html` : historique des commandes de l'utilisateur connecté.
 - `css/auth.css`, `css/checkout.css`, `css/commandes.css`.
+- **Newsletter + contact** : bandeau newsletter ajouté sur toutes les pages marchandes ; insertion **anonyme** (RLS insert public OK) dans `newsletter_subscribers` (footer) et `contacts` (formulaire contact `index.html`). Pas de service d'email → stockage seul, l'admin gère depuis l'admin.
 
 ### Panneau admin (`admin/`)
 - `js/admin-config.js` : `window.ADMIN_CONFIG` (URL, clé anon, `ADMIN_EMAIL='admin@pixelstore.bi'`).
 - `js/admin-supabase.js` : **couche partagée** — client, `adminGate()` (écran login + contrôle rôle admin), `adminDB` :
-  - **Lecture** : `products()` (avec brand/category/stock/images), `categories()`, `coupons()`, `orders()` (avec items + user email), `customers()`, `stockStatus()`, `dashboardStats()`.
-  - **Écriture** : `saveProduct/deleteProduct`, `saveCategory/deleteCategory`, `saveCoupon/deleteCoupon`, `updateStock`, `updateOrderStatus`, `slugify`.
-- `js/layout.js` : `renderAdminLayout(pageKey)` + `initSidebarLogout` (déconnexion Supabase → site public).
+  - **Lecture** : `products()` (avec brand/category/stock/images), `categories()`, `coupons()`, `orders()` (avec items + user email), `customers()`, `stockStatus()`, `dashboardStats()`, `subscribers()`, `subscriberStats()`, `contacts()`, `contactStats()`.
+  - **Notifications** : `getNotifications()` (agrège messages non lus, commandes récentes 24h, nouveaux clients/abonnés 24h, stock faible).
+  - **Écriture** : `saveProduct/deleteProduct`, `saveCategory/deleteCategory`, `saveCoupon/deleteCoupon`, `updateStock`, `updateOrderStatus`, `toggleSubscriber`, `deleteSubscriber`, `markContactRead`, `markAllMessagesRead`, `deleteContact`, `slugify`.
+- `js/layout.js` : `renderAdminLayout(pageKey)` + `initSidebarLogout` (déconnexion Supabase → site public). Sidebar (groupe Marketing) : « Abonnés newsletter » → `abonnes.html`, « Messages » → `contacts.html`.
 - `js/admin.js` : helpers (`formatPrice`, `statusMap`, `showToast`, etc.), `initAdminTheme/Sidebar/GlobalSearch/Notifications`.
 
 ### Pages admin — toutes connectées à Supabase (materialisées dans le commit `0747f6c`)
 - `index.html` (dashboard : stats DB), `produits.html` (liste), `produit-form.html` (création/édition/suppression), `categories.html`, `commandes.html` (détail + changement de statut), `coupons.html`, `clients.html`, `stock.html`.
+- `abonnes.html` : liste des abonnés newsletter (stats total/actifs/ce mois/source, recherche, toggle actif/inactif, suppression).
+- `contacts.html` : boîte de réception des messages (stats total/non lus/ce mois, recherche, modal lecture auto-marqué lu, toggle lu/non-lu, suppression). Ouvre automatiquement un message via `?id=` (depuis la cloche).
 - Chaque page : `renderAdminLayout(pageKey)` puis `adminGate(content, load)` → l'accès nécessite session **et** rôle admin ; non-admin → « Accès refusé ».
+
+### Cloche de notifications admin (événements réels du site)
+- **Données** : panel alimenté par `adminDB.getNotifications()` (messages non lus, nouvelles commandes, nouveaux clients, abonnés, stock faible). Polling toutes les **30 s** → les nouveaux événements apparaissent sans action.
+- **Compteur** = **nombre de messages non lus uniquement** (pas toutes les activités). Badge rouge chiffré ; masqué si 0.
+- **Tri** : messages non lus **en premier** (le plus récent en haut), puis autres événements par date.
+- **Clic / bouton « Lire »** : message → ouvre `contacts.html?id=...` (boîte de réception + message ouvert/marqué lu) ; commande → `commandes.html` ; client → `clients.html` ; abonné → `abonnes.html` ; stock → `stock.html`.
+- **« Marquer comme lu »** : marque tous les messages non lus lus (`markAllMessagesRead`) et remet le compteur à zéro.
 
 ## 5. Schéma (`supabase_schema.sql`) — IDEMPOTENT, à ré-exécuter
 
@@ -56,6 +68,10 @@ Fichier idempotent (CREATE OR REPLACE, DROP POLICY IF EXISTS, seeds ON CONFLICT 
 - Fonction **`admin_update_order_status(uuid, text)`** en `SECURITY DEFINER` (permet à l'admin de changer le statut d'une commande, car volontairement AUCUNE policy UPDATE sur `orders`). Colonnes réelles : `order_status_history.created_at` (+ `changed_by`).
 - Policy **`users_admin`** (SELECT sur TOUS les utilisateurs pour admin) — nécessaire pour la page Clients et la jointure email des commandes. `users_self` reste `id = auth.uid()`.
 - `create_order` : `SECURITY DEFINER` + `SET search_path = public`, paramètre `p_notes`, `GRANT EXECUTE ... TO anon, authenticated`.
+- **Tables marketing** (ajout 2026-09-02) :
+  - `newsletter_subscribers` : `id, email (UNIQUE), phone, name, source (default 'footer'), is_active, created_at` — RLS insert public, admin gère.
+  - `contacts` : `id, name, email, subject, message, is_read, created_at` — RLS insert public, admin gère.
+  - Policies : `nsub_insert` / `contacts_insert` (INSERT public anonyme vérifié → 201), `nsub_read/write` / `contacts_read/write` (admin).
 
 ### Segrérité RLS (clés)
 - Écritures admin via `FOR ALL USING (public.is_admin())` sur products, product_images, product_specs, product_certificates, categories, brands, stock, coupons, stock_movements.
@@ -64,27 +80,25 @@ Fichier idempotent (CREATE OR REPLACE, DROP POLICY IF EXISTS, seeds ON CONFLICT 
 
 ## 6. Tests exécutés
 
-- `node --check` OK sur : `admin-supabase.js`, `admin-config.js`, `admin.js`, `layout.js`, + les scripts inline extraits de toutes les pages admin (index, produits, produit-form, commandes, clients, categories, coupons, stock).
+- `node --check` OK sur : `admin-supabase.js`, `admin-config.js`, `admin.js`, `layout.js`, `js/main.js`, `js/supabase-config.js`, + les scripts inline extraits de toutes les pages admin (index, produits, produit-form, commandes, clients, categories, coupons, stock, abonnes, contacts).
+- Insertions **anonymes** vérifiées (HTTP 201) sur `newsletter_subscribers` et `contacts` → RLS insert public OK.
+- `getNotifications()` vérifiée en base : 3 messages non lus (Emma, Savoir, Test) → compteur à 3.
 - Aucun framework de test / lint (pas de package.json).
 
 ## 7. État Git
 
-- Dernier commit : **`0747f6c`** « Admin connecté à Supabase : login/gate admin, produits, catégories, commandes, coupons, clients, stock, dashboard » — **poussé sur `main`**.
-- Tout est commité (working tree propre sauf si nouvelles modifs).
+- Commits récents poussés sur `main` : `04e5c1b` (compression images), `50a004d` (compactage), `7eadcdf` (newsletter + contacts + pages admin abonnes/contacts), `620aa47` (correctifs frontend + SDK local), `7b2f189` (supabase-config SDK local UMD), `2bfc755` (cloche notifications), `d378c20` (compteur = messages non lus + tri).
+- Dernière fonctionnalité en cours/livrée : cloche admin branchée sur les événements réels + boîte de réception.
+- Tout est commité (working tree propre sauf si nouvelles modifs à partir de ce README).
 
 ---
 
 ## 8. PROCHAINES ÉTAPES (à faire côté utilisateur — bloque les tests)
 
-1. **Ré-exécuter `supabase_schema.sql`** dans l'éditeur SQL Supabase (applique les changements admin : promotion rôle, `admin_update_order_status`, policy `users_admin`).
-2. **Désactiver « Confirm email »** (option choisie) : Supabase Dashboard → Authentication → Providers → Email → décocher « Confirm email ». → permet une inscription immédiate sans email.
-3. **Créer le compte admin** `admin@pixelstore.bi` + mot de passe de démo (via S'inscrire sur le site, ou via l'API si demandé).
-4. **Vérifier que le rôle = admin** : soit par le schéma (étape 1), soit par l'UPDATE SQL :
-   ```sql
-   UPDATE public.users SET role = 'admin'
-   WHERE lower(email) = lower('admin@pixelstore.bi');
-   ```
-5. **Tester le flux** : connexion admin → ajout de produit → visible dans le catalogue.
+1. ✅ **Ré-exécuter `supabase_schema.sql`** : appliqué (tables `newsletter_subscribers` + `contacts` + policies créées, promotion rôle admin, `admin_update_order_status`, `users_admin`).
+2. ✅ **Désactiver « Confirm email »** + **compte admin créé** (`admin@pixelstore.bi`) — connexion admin fonctionnelle.
+3. ✅ **Flow newsletter / contact / cloche** testé et fonctionnel.
+4. Reste éventuel : valider la clé de service / Storage si un jour besoin (actuellement inutile).
 
 ## 8ter. IMAGES PRODUITS — compression côté client (sans Storage)
 
