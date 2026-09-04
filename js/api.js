@@ -91,10 +91,10 @@ async function getCatalogProducts() {
 
       if (!error && Array.isArray(rows) && rows.length) {
         return rows.map((p) => {
-          const available =
-            (p.stock && p.stock.length
-              ? (p.stock[0].quantity || 0) - (p.stock[0].reserved_quantity || 0)
-              : 999); // pas de ligne stock => considéré dispo
+          const stockRaw = Array.isArray(p.stock) ? (p.stock[0] || null) : p.stock;
+          const available = stockRaw
+            ? (Number(stockRaw.quantity) || 0) - (Number(stockRaw.reserved_quantity) || 0)
+            : 999;
           const mainImage =
             (p.images && p.images.slice().sort((a, b) => a.sort_order - b.sort_order)[0]);
           return {
@@ -160,7 +160,7 @@ async function getStoreProducts() {
             image: gallery[0] || resolveAsset(''),
             gallery: gallery.length ? gallery : [gallery[0] || ''],
             desc: p.description || '',
-            stock: (p.stock && p.stock.length ? p.stock[0].quantity : 0) || 0,
+            stock: (Array.isArray(p.stock) ? (p.stock[0] && p.stock[0].quantity) : (p.stock && p.stock.quantity)) || 0,
             warranty: p.warranty || '',
             preview: p.tag || '',
             cert: cert

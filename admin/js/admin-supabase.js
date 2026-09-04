@@ -178,7 +178,7 @@
       // transporte donc JAMAIS dans les listings : on charge séparément, et en
       // parallèle, uniquement les images légères (img/...) via imagesByProduct().
       var q = adminSupabase.from('products')
-        .select('id, name, slug, reference, tag, price, old_price, rating, description, is_active, brand:brand_id(name), category:category_id(slug, name), stock:stock(quantity)')
+        .select('id, name, slug, reference, tag, price, old_price, rating, description, is_active, brand:brand_id(name), category:category_id(slug, name), stock:stock(quantity, low_stock_threshold)')
         .order('id');
       if (opts && opts.page && opts.pageSize) {
         var start = (opts.page - 1) * opts.pageSize;
@@ -187,6 +187,7 @@
       var [ { data, error }, imgMap ] = await Promise.all([ q, this.imagesByProduct() ]);
       if (error) throw error;
       return (data || []).map(function (p) {
+        var st = Array.isArray(p.stock) ? (p.stock[0] || null) : p.stock;
         return {
           id: p.id, name: p.name, reference: p.reference, tag: p.tag, price: Number(p.price) || 0,
           oldPrice: p.old_price != null ? Number(p.old_price) : null, rating: Number(p.rating) || 0,
@@ -194,7 +195,8 @@
           brand: (p.brand && p.brand.name) || 'PixelStore',
           category: (p.category && p.category.slug) || 'ordinateurs',
           categoryName: (p.category && p.category.name) || '',
-          stock: (p.stock && p.stock.length ? p.stock[0].quantity : 0) || 0,
+          stock: (st && Number(st.quantity)) || 0,
+          stockThreshold: (st && Number(st.low_stock_threshold)) || 5,
           image: imgMap[p.id] || ''
         };
       });
@@ -221,6 +223,7 @@
       var main = (data.images || []).slice().sort(function (a, b) {
         return (b.is_main ? 1 : 0) - (a.is_main ? 1 : 0) || a.sort_order - b.sort_order;
       })[0];
+      var dst = Array.isArray(data.stock) ? (data.stock[0] || null) : data.stock;
       return {
         id: data.id, name: data.name, reference: data.reference, tag: data.tag,
         price: Number(data.price) || 0,
@@ -230,7 +233,7 @@
         brand: (data.brand && data.brand.name) || 'PixelStore',
         category: (data.category && data.category.slug) || 'ordinateurs',
         categoryName: (data.category && data.category.name) || '',
-        stock: (data.stock && data.stock.length ? data.stock[0].quantity : 0) || 0,
+        stock: (dst && Number(dst.quantity)) || 0,
         image: (main && main.image_url) || ''
       };
     },
@@ -278,7 +281,8 @@
         .order('name');
       if (error) throw error;
       return (data || []).map(function (p) {
-        var s = (p.stock && p.stock[0]) || { quantity: 0, low_stock_threshold: 5 };
+        var sRaw = Array.isArray(p.stock) ? (p.stock[0] || null) : p.stock;
+        var s = sRaw || { quantity: 0, low_stock_threshold: 5 };
         return { id: p.id, name: p.name, reference: p.reference, quantity: s.quantity || 0, threshold: s.low_stock_threshold || 5 };
       });
     },
@@ -437,7 +441,8 @@
         var st = await adminSupabase.from('products')
           .select('id, name, stock:stock(quantity, low_stock_threshold)');
         (st.data || []).forEach(function (p) {
-          var s = (p.stock && p.stock[0]) || { quantity: 0, low_stock_threshold: 5 };
+          var sRaw = Array.isArray(p.stock) ? (p.stock[0] || null) : p.stock;
+          var s = sRaw || { quantity: 0, low_stock_threshold: 5 };
           if ((Number(s.quantity) || 0) <= (Number(s.low_stock_threshold) || 5)) {
             out.push({
               type: 'stock', unread: false, icon: 'stock',

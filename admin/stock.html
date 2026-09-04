@@ -20,7 +20,7 @@
       document.addEventListener('DOMContentLoaded', () => {
         const content = renderAdminLayout('stock');
 
-        const lowThreshold = 10;
+        const defaultThreshold = 5;
         let currentFilter = 'all';
         let products = [];
         let categories = [];
@@ -93,16 +93,17 @@
         const modal = document.getElementById('stockModal');
 
         function stockLevel(p) {
+          const thr = p.stockThreshold || defaultThreshold;
           if (p.stock <= 0) return 'out';
-          if (p.stock <= lowThreshold) return 'low';
+          if (p.stock <= thr) return 'low';
           return 'in';
         }
 
         function renderStock() {
           let list = products;
-          if (currentFilter === 'low') list = list.filter(p => p.stock > 0 && p.stock <= lowThreshold);
+          if (currentFilter === 'low') list = list.filter(p => p.stock > 0 && p.stock <= (p.stockThreshold || defaultThreshold));
           if (currentFilter === 'out') list = list.filter(p => p.stock <= 0);
-          if (currentFilter === 'in') list = list.filter(p => p.stock > lowThreshold);
+          if (currentFilter === 'in') list = list.filter(p => p.stock > (p.stockThreshold || defaultThreshold));
           const q = searchInput.value.toLowerCase();
           if (q) {
             list = list.filter(p =>
@@ -152,7 +153,7 @@
                   <div style="min-width:130px">
                     <div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:4px">
                       <strong>${p.stock} u.</strong>
-                      <span style="color:var(--text-secondary)">seuil ${lowThreshold}</span>
+                      <span style="color:var(--text-secondary)">seuil ${p.stockThreshold || defaultThreshold}</span>
                     </div>
                     <div style="height:6px;background:var(--bg-primary);border-radius:999px">
                       <div style="height:100%;border-radius:999px;width:${pct}%;background:${lvl === 'out' ? 'var(--accent-red)' : lvl === 'low' ? '#F59E0B' : 'var(--accent-green)'}"></div>
@@ -274,20 +275,43 @@
         });
 
         document.getElementById('exportBtn').addEventListener('click', () => {
-          const rows = [['Produit', 'Référence', 'Catégorie', 'Quantité', 'Statut']];
-          products.forEach(p => {
+          let list = products;
+          if (currentFilter === 'low') list = list.filter(p => p.stock > 0 && p.stock <= (p.stockThreshold || defaultThreshold));
+          if (currentFilter === 'out') list = list.filter(p => p.stock <= 0);
+          if (currentFilter === 'in') list = list.filter(p => p.stock > (p.stockThreshold || defaultThreshold));
+          const q = searchInput.value.toLowerCase();
+          if (q) {
+            list = list.filter(p =>
+              p.name.toLowerCase().includes(q) ||
+              p.reference.toLowerCase().includes(q) ||
+              (p.brand && p.brand.toLowerCase().includes(q))
+            );
+          }
+
+          const rows = [['Produit', 'Catégorie', 'Référence', 'Quantité (u.)', 'Disponible', 'Statut']];
+          list.forEach(p => {
             const cat = categories.find(c => c.slug === p.category);
             const lvl = stockLevel(p);
-            rows.push([p.name, p.reference, cat ? cat.name : (p.categoryName || p.category), p.stock, lvl === 'out' ? 'En rupture' : lvl === 'low' ? 'Stock faible' : 'Disponible']);
+            rows.push([
+              p.name,
+              cat ? cat.name : (p.categoryName || p.category),
+              p.reference,
+              p.stock,
+              p.stock,
+              lvl === 'out' ? 'En rupture' : lvl === 'low' ? 'Stock faible' : 'Disponible'
+            ]);
           });
           const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\r\n');
           const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
+          a.href = url;
           a.download = 'stock_pixelstore.csv';
+          document.body.appendChild(a);
           a.click();
-          URL.revokeObjectURL(a.href);
-          showToast('Stock exporté en CSV.');
+          document.body.removeChild(a);
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          showToast('Stock exporté en CSV (' + list.length + ' ligne' + (list.length > 1 ? 's' : '') + ').');
         });
 
         document.getElementById('stockModalClose').addEventListener('click', () => modal.classList.remove('open'));
