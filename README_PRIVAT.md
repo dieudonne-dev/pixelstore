@@ -33,6 +33,8 @@
 - `js/api.js` : couche d'accès données avec **fallback local** (`waitForSupabase()`) ; helpers panier DB `getOrCreateCart`/`syncCartToDb`/`loadCartFromDb`.
 - `js/auth.js` : auth front (inscription/connexion/déconnexion, modale injectée, menu `.header-actions`, `window.PixelAuth` / `window.storeUser` / `window.onUserChange`, sync panier). API : `resetPasswordForEmail`, `extractErrorMessage` (messages FR).
 - `js/filters.js`, `js/fiche.js` : catalogue asynchrone.
+- `js/wishlist.js` (objet `PixelWishlist`) + `favoris.html` : **favoris** stockés en `localStorage` (`pixelstore_wishlist`). Le cœur de chaque carte produit (Store et favoris) bascule l'état ; badge `wishlist-count` dans le header (`favoris.html`). Non lié à un utilisateur (local au navigateur) — choix simple pour l'instant.
+- Clic sur une carte produit (Store) → `produit.html?id=...` (icônes favoris et bouton panier exclus de la navigation).
 - `js/checkout.js` + `checkout.html` : panier localStorage → DB → RPC `create_order`.
 - `js/commandes.js` + `commandes.html` : historique des commandes de l'utilisateur connecté.
 - `css/auth.css`, `css/checkout.css`, `css/commandes.css`.

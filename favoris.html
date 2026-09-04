@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Store - PixelStore</title>
+  <title>Mes Favoris - PixelStore</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/variables.css">
@@ -14,23 +14,19 @@
 <body>
 
   <!-- ==================== HEADER ==================== -->
-  <!-- (identique à index.html : logo, nav, icônes, menu mobile) -->
   <header class="header">
     <div class="container header-container">
-
       <div class="logo">
         <a href="index.html">Pixel<span class="logo-accent">Store</span></a>
       </div>
-
       <nav class="nav">
         <ul class="nav-list">
           <li><a href="index.html" class="nav-link">Accueil</a></li>
-          <li><a href="catalogue.html" class="nav-link active">Store</a></li>
+          <li><a href="catalogue.html" class="nav-link">Store</a></li>
           <li><a href="catalogue.html">Catégories</a></li>
           <li><a href="index.html#contact" class="nav-link">Contact</a></li>
         </ul>
       </nav>
-
       <div class="header-actions">
         <button class="icon-btn" id="theme-toggle" aria-label="Changer de thème">
           <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -48,14 +44,12 @@
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
           </svg>
         </button>
-
         <a href="favoris.html" class="icon-btn wishlist-btn" aria-label="Favoris">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
           </svg>
           <span class="cart-badge wishlist-count" style="display:none">0</span>
         </a>
-
         <a href="panier.html" class="icon-btn cart-btn" aria-label="Panier">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="9" cy="21" r="1"></circle>
@@ -64,7 +58,6 @@
           </svg>
           <span class="cart-badge" id="cart-count">0</span>
         </a>
-
         <button class="icon-btn mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -73,174 +66,41 @@
           </svg>
         </button>
       </div>
-
       <div class="mobile-nav" id="mobile-nav">
         <ul>
           <li><a href="index.html" class="nav-link">Accueil</a></li>
-          <li><a href="catalogue.html" class="nav-link active">Store</a></li>
-          <li><a href="index.html#categories" class="nav-link">Catégories</a></li>
-          <li><a href="catalogue.html" class="nav-link">Catégories</a></li>
+          <li><a href="catalogue.html" class="nav-link">Store</a></li>
           <li><a href="index.html#contact" class="nav-link">Contact</a></li>
           <li><a href="favoris.html" class="nav-link">Favoris</a></li>
         </ul>
       </div>
-
     </div>
   </header>
- 
 
   <!-- ==================== EN-TÊTE DE PAGE ==================== -->
   <section class="page-header">
     <div class="container">
-      <span class="breadcrumb"><a href="index.html">Accueil</a> / <span>Store</span></span>
-      <h1 class="page-title">Notre Store</h1>
-      <p class="page-subtitle">Découvrez notre sélection complète de matériel informatique</p>
+      <span class="breadcrumb"><a href="index.html">Accueil</a> / <span>Mes Favoris</span></span>
+      <h1 class="page-title">Mes Favoris</h1>
+      <p class="page-subtitle">Retrouvez tous les produits que vous avez ajoutés à votre liste de souhaits.</p>
     </div>
   </section>
- 
 
-  <!-- ==================== CATALOGUE PRINCIPAL ==================== -->
+  <!-- ==================== LISTE FAVORIS ==================== -->
   <section class="catalogue-section">
-    <div class="container catalogue-layout">
+    <div class="container">
 
-      <!-- ========== SIDEBAR FILTRES ========== -->
-      <aside class="filters-sidebar">
+      <div class="products-grid" id="products-grid"></div>
 
-        <!-- Recherche -->
-        <div class="filter-block">
-          <h3 class="filter-title">Rechercher</h3>
-          <div class="search-box">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input type="text" id="search-input" placeholder="Nom du produit...">
-          </div>
-        </div>
-
-        <!-- Catégories -->
-        <div class="filter-block">
-          <h3 class="filter-title">Catégorie</h3>
-          <div class="filter-options" id="category-filters">
-            <label class="filter-checkbox">
-              <input type="checkbox" value="all" checked>
-              <span>Toutes les catégories</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="ordinateurs">
-              <span>Ordinateurs</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="claviers">
-              <span>Claviers</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="souris">
-              <span>Souris</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="ecrans">
-              <span>Écrans</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="casques">
-              <span>Casques</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="composants">
-              <span>Composants</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Marques -->
-        <div class="filter-block">
-          <h3 class="filter-title">Marque</h3>
-          <div class="filter-options" id="brand-filters">
-            <label class="filter-checkbox">
-              <input type="checkbox" value="Dell">
-              <span>Dell</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="HP">
-              <span>HP</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="Logitech">
-              <span>Logitech</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="Razer">
-              <span>Razer</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="Samsung">
-              <span>Samsung</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="Sony">
-              <span>Sony</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Prix -->
-        <div class="filter-block">
-          <h3 class="filter-title">Prix maximum</h3>
-          <input type="range" id="price-range" min="0" max="1000000" step="10000" value="1000000">
-          <div class="price-range-value">
-            Jusqu'à <span id="price-value">1 000 000</span> BIF
-          </div>
-        </div>
-
-        <!-- Disponibilité -->
-        <div class="filter-block">
-          <label class="filter-checkbox">
-            <input type="checkbox" id="stock-filter">
-            <span>En stock uniquement</span>
-          </label>
-        </div>
-
-        <!-- Bouton réinitialiser -->
-        <button class="btn btn-secondary btn-full" id="reset-filters">Réinitialiser les filtres</button>
-
-      </aside>
-      <!-- ========== FIN SIDEBAR ========== -->
-
-      <!-- ========== ZONE PRODUITS ========== -->
-      <div class="catalogue-main">
-
-        <!-- Barre de résultats + tri -->
-        <div class="catalogue-toolbar">
-          <p class="results-count"><span id="results-count">12</span> produits trouvés</p>
-          <select id="sort-select" class="sort-select">
-            <option value="default">Trier par</option>
-            <option value="price-asc">Prix croissant</option>
-            <option value="price-desc">Prix décroissant</option>
-            <option value="name-asc">Nom (A-Z)</option>
-            <option value="rating-desc">Meilleures notes</option>
-          </select>
-        </div>
-
-        <!-- Grille de produits (remplie dynamiquement par JS) -->
-        <div class="products-grid" id="products-grid">
-          <!-- Les cartes produits sont générées ici par filters.js -->
-        </div>
-
-        <!-- Message si aucun résultat -->
-        <div class="no-results" id="no-results" style="display: none;">
-          <p>Aucun produit ne correspond à votre recherche.</p>
-        </div>
-
+      <div class="no-results" id="no-results" style="display:none">
+        <p>Vous n'avez aucun produit en favoris.</p>
+        <a href="catalogue.html" class="btn btn-primary" style="margin-top:16px">Découvrir le Store</a>
       </div>
-      <!-- ========== FIN ZONE PRODUITS ========== -->
 
     </div>
   </section>
-  <!-- ==================== FIN CATALOGUE ==================== -->
 
   <!-- ==================== FOOTER ==================== -->
-  <!-- (identique à index.html) -->
   <footer class="footer">
     <div class="footer-cta">
       <div class="footer-cta-text">
@@ -263,7 +123,7 @@
           <a href="index.html">Pixel<span class="logo-accent">Store</span></a>
         </div>
         <p class="footer-description">
-          Votre destination pour du matériel informatique de qualité, 
+          Votre destination pour du matériel informatique de qualité,
           sélectionné avec soin, au meilleur prix.
         </p>
       </div>
@@ -291,7 +151,6 @@
       </div>
     </div>
   </footer>
-  <!-- ==================== FIN FOOTER ==================== -->
 
   <!-- ==================== SCRIPTS ==================== -->
   <script src="js/products.js"></script>
@@ -299,8 +158,62 @@
   <script src="js/api.js"></script>
   <script src="js/wishlist.js"></script>
   <script src="js/auth.js"></script>
-  <script src="js/filters.js"></script>
+  <script src="js/palette.js"></script>
   <script src="js/cart.js"></script>
   <script src="js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async function () {
+      var grid = document.getElementById('products-grid');
+      var noRes = document.getElementById('no-results');
+      var ids = PixelWishlist.getAll();
+      if (!ids.length) { grid.innerHTML = ''; noRes.style.display = 'block'; return; }
+
+      var all = await getCatalogProducts();
+      var favs = all.filter(function (p) { return ids.indexOf(p.id) !== -1; });
+      if (!favs.length) { grid.innerHTML = ''; noRes.style.display = 'block'; return; }
+
+      favs.forEach(function (product) {
+        var card = document.createElement('div');
+        card.className = 'product-card';
+        card.setAttribute('role', 'link');
+        card.setAttribute('tabindex', '0');
+        card.dataset.id = product.id;
+        var badgeHTML = '';
+        if (!product.inStock) badgeHTML = '<span class="product-badge out-of-stock">Rupture</span>';
+        else if (product.oldPrice) badgeHTML = '<span class="product-badge">Promo</span>';
+        var priceHTML = product.oldPrice
+          ? '<span class="price-old">' + product.oldPrice.toLocaleString('fr-FR') + ' BIF</span><span class="price-current">' + product.price.toLocaleString('fr-FR') + ' BIF</span>'
+          : '<span class="price-current">' + product.price.toLocaleString('fr-FR') + ' BIF</span>';
+        card.innerHTML =
+          '<div class="product-image">' + badgeHTML +
+          '<div class="product-wishlist is-active" data-wish-id="' + product.id + '" aria-label="Retirer des favoris">' +
+          '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">' +
+          '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></div>' +
+          '<img src="' + product.image + '" alt="' + product.name + '"></div>' +
+          '<div class="product-info"><p class="product-category">' + product.category + '</p>' +
+          '<h3 class="product-name">' + product.name + '</h3>' +
+          '<div class="product-rating"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg><span>' + product.rating + '</span></div>' +
+          '<div class="product-price">' + priceHTML + '</div>' +
+          '<button class="btn-add-cart" data-id="' + product.id + '"' + (!product.inStock ? ' disabled' : '') + '>' + (product.inStock ? 'Ajouter au panier' : 'Indisponible') + '</button></div>';
+        grid.appendChild(card);
+      });
+
+      grid.addEventListener('click', function (e) {
+        if (e.target.closest('.btn-add-cart')) return;
+        if (e.target.closest('.product-wishlist')) {
+          e.stopPropagation();
+          var btn = e.target.closest('.product-wishlist');
+          var pid = Number(btn.dataset.wishId);
+          if (!pid) return;
+          PixelWishlist.toggle(pid);
+          var pcard = btn.closest('.product-card');
+          if (pcard) { pcard.style.opacity = '0'; setTimeout(function () { pcard.remove(); if (!grid.children.length) noRes.style.display = 'block'; }, 300); }
+          return;
+        }
+        var c = e.target.closest('.product-card');
+        if (c && c.dataset.id) window.location.href = 'produit.html?id=' + c.dataset.id;
+      });
+    });
+  </script>
 </body>
 </html>

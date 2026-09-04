@@ -24,7 +24,7 @@
       <nav class="nav">
         <ul class="nav-list">
           <li><a href="index.html" class="nav-link">Accueil</a></li>
-          <li><a href="catalogue.html" class="nav-link">Catalogue</a></li>
+          <li><a href="catalogue.html" class="nav-link">Store</a></li>
           <li><a href="catalogue.html">Catégories</a></li>
           <li><a href="index.html#contact" class="nav-link">Contact</a></li>
         </ul>
@@ -48,6 +48,13 @@
           </svg>
         </button>
 
+        <a href="favoris.html" class="icon-btn wishlist-btn" aria-label="Favoris">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+          <span class="cart-badge wishlist-count" style="display:none">0</span>
+        </a>
+
         <a href="panier.html" class="icon-btn cart-btn" aria-label="Panier">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="9" cy="21" r="1"></circle>
@@ -69,9 +76,10 @@
       <div class="mobile-nav" id="mobile-nav">
         <ul>
           <li><a href="index.html" class="nav-link">Accueil</a></li>
-          <li><a href="catalogue.html" class="nav-link">Catalogue</a></li>
+          <li><a href="catalogue.html" class="nav-link">Store</a></li>
           <li><a href="catalogue.html" class="nav-link">Catégories</a></li>
           <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+          <li><a href="favoris.html" class="nav-link">Favoris</a></li>
         </ul>
       </div>
 
@@ -83,7 +91,7 @@
   <section class="page-header">
     <div class="container">
       <span class="breadcrumb">
-        <a href="index.html">Accueil</a> / <a href="catalogue.html">Catalogue</a> / <span id="crumb-name">Fiche technique</span>
+        <a href="index.html">Accueil</a> / <a href="catalogue.html">Store</a> / <span id="crumb-name">Fiche technique</span>
       </span>
       <h1 class="page-title">Fiche technique</h1>
       <p class="page-subtitle">Toutes les informations, le certificat et la disponibilité du produit</p>
@@ -294,7 +302,7 @@
         <h4>Navigation</h4>
         <ul class="footer-links">
           <li><a href="index.html">Accueil</a></li>
-          <li><a href="catalogue.html">Catalogue</a></li>
+          <li><a href="catalogue.html">Store</a></li>
           <li><a href="index.html#contact">Contact</a></li>
         </ul>
       </div>
@@ -318,6 +326,7 @@
   <script src="js/data.js"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/wishlist.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/palette.js"></script>
   <script src="js/cart.js"></script>

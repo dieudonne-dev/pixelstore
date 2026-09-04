@@ -35,6 +35,11 @@ function renderProducts(list) {
   list.forEach(product => {
     const card = document.createElement('div');
     card.className = 'product-card';
+    card.setAttribute('role', 'link');
+    card.setAttribute('tabindex', '0');
+    card.dataset.id = product.id;
+
+    const isFav = typeof PixelWishlist !== 'undefined' && PixelWishlist.has(product.id);
 
     // Construit le badge (Promo si oldPrice existe, ou Rupture si hors stock)
     let badgeHTML = '';
@@ -53,8 +58,8 @@ function renderProducts(list) {
     card.innerHTML = `
       <div class="product-image">
         ${badgeHTML}
-        <div class="product-wishlist" aria-label="Ajouter aux favoris">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="product-wishlist${isFav ? ' is-active' : ''}" data-wish-id="${product.id}" aria-label="Ajouter aux favoris">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
           </svg>
         </div>
@@ -81,6 +86,42 @@ function renderProducts(list) {
     productsGrid.appendChild(card);
   });
 }
+
+// Clic sur une carte produit → fiche technique
+productsGrid.addEventListener('click', function (e) {
+  // Le bouton "Ajouter au panier" garde son comportement
+  if (e.target.closest('.btn-add-cart')) return;
+
+  // Le bouton favoris gère le toggle sans naviguer
+  if (e.target.closest('.product-wishlist')) {
+    e.stopPropagation();
+    var btn = e.target.closest('.product-wishlist');
+    var pid = Number(btn.dataset.wishId);
+    if (!pid || typeof PixelWishlist === 'undefined') return;
+    var added = PixelWishlist.toggle(pid);
+    var svg = btn.querySelector('svg');
+    svg.setAttribute('fill', added ? 'currentColor' : 'none');
+    btn.classList.toggle('is-active', added);
+    return;
+  }
+
+  // Clic ailleurs sur la carte → ouvrir la fiche
+  var card = e.target.closest('.product-card');
+  if (card && card.dataset.id) {
+    window.location.href = 'produit.html?id=' + card.dataset.id;
+  }
+});
+
+// Support clavier (Entrée/Espace)
+productsGrid.addEventListener('keydown', function (e) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    var card = e.target.closest('.product-card');
+    if (card && card.dataset.id && !e.target.closest('.product-wishlist') && !e.target.closest('.btn-add-cart')) {
+      e.preventDefault();
+      window.location.href = 'produit.html?id=' + card.dataset.id;
+    }
+  }
+});
 
 // ==================== LOGIQUE DE FILTRAGE ====================
 // Récupère les éléments de filtre du DOM

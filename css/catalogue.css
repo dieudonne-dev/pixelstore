@@ -185,6 +185,7 @@
   border-radius: 16px;
   overflow: hidden;
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .product-card:hover {
@@ -247,6 +248,11 @@
 .product-wishlist:hover {
   background-color: white;
   color: var(--accent-red);
+}
+
+.product-wishlist.is-active {
+  color: var(--accent-red);
+  background-color: white;
 }
 
 /* Infos produit */
