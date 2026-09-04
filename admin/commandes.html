@@ -145,10 +145,27 @@
           }).join('');
         }
 
-        function openOrderModal(order) {
+        async function openOrderModal(order) {
           const st = orderStatusMap[order.status] || orderStatusMap.pending;
           const pay = paymentStatusMap[order.payment_status] || paymentStatusMap.pending;
-          const email = (order.user && order.user.email) || 'Client';
+          const u = order.user || {};
+          const fullName = [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email || 'Client';
+          const phone = u.phone || '';
+
+          let addresses = [];
+          try { addresses = await adminDB.addressesByUser(order.user_id); } catch (e) { /* ignore */ }
+          const shipping = addresses.find(a => a.type === 'shipping') || addresses[0] || null;
+          const billing = addresses.find(a => a.type === 'billing') || null;
+
+          function fmtAddr(a) {
+            if (!a) return '<span style="color:var(--text-secondary)">Aucune adresse renseignée</span>';
+            const lines = [a.address_line1, a.address_line2].filter(Boolean);
+            const cityLine = [a.city, a.province].filter(Boolean).join(', ');
+            if (cityLine) lines.push(cityLine);
+            if (a.country) lines.push(a.country);
+            const aPhone = a.phone || phone;
+            return lines.map(l => '<div>' + l + '</div>').join('') + (aPhone ? '<div style="margin-top:4px;color:var(--text-secondary);font-size:0.82rem">' + aPhone + '</div>' : '');
+          }
 
           const statusOptions = Object.keys(orderStatusMap)
             .filter(s => s !== 'confirmed')
@@ -173,23 +190,49 @@
 
               <div class="card" style="margin-bottom:16px">
                 <div class="card-header"><h4>Informations client</h4></div>
-                <div style="display:flex;gap:14px;align-items:center">
+                <div style="display:flex;gap:14px;align-items:center;margin-bottom:14px">
                   <div class="aside-row" style="border:none;padding:0">
-                    <div class="customer-avatar">${initials(email)}</div>
+                    <div class="customer-avatar">${initials(fullName)}</div>
                     <div>
-                      <p><strong>${email}</strong></p>
-                      <span>${email}</span>
+                      <p><strong>${fullName}</strong></p>
+                      <span>${u.email || '—'}</span>
                     </div>
                   </div>
                 </div>
                 <div class="detail-section">
                   <div style="display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between">
+                    <div><strong style="font-size:0.8rem;color:var(--text-secondary)">Téléphone</strong><br><span>${phone || '—'}</span></div>
                     <div><strong style="font-size:0.8rem;color:var(--text-secondary)">Paiement</strong><br><span class="badge ${pay.badge}">${pay.label}</span></div>
                     <div><strong style="font-size:0.8rem;color:var(--text-secondary)">Méthode</strong><br><span>${methodLabel(order.payment_method)}</span></div>
                     <div><strong style="font-size:0.8rem;color:var(--text-secondary)">Date</strong><br><span>${formatDateTime(order.created_at)}</span></div>
                   </div>
                 </div>
               </div>
+
+              ${addresses.length ? `
+              <div class="card" style="margin-bottom:16px">
+                <div class="card-header"><h4>Adresse(s)</h4></div>
+                <div style="display:flex;gap:20px;flex-wrap:wrap">
+                  <div style="flex:1;min-width:180px">
+                    <strong style="font-size:0.8rem;color:var(--text-secondary)">Livraison</strong>
+                    <div style="margin-top:4px;font-size:0.88rem;line-height:1.5">${fmtAddr(shipping)}</div>
+                  </div>
+                  ${billing ? `
+                  <div style="flex:1;min-width:180px">
+                    <strong style="font-size:0.8rem;color:var(--text-secondary)">Facturation</strong>
+                    <div style="margin-top:4px;font-size:0.88rem;line-height:1.5">${fmtAddr(billing)}</div>
+                  </div>
+                  ` : ''}
+                </div>
+              </div>
+              ` : ''}
+
+              ${order.customer_notes ? `
+              <div class="card" style="margin-bottom:16px">
+                <div class="card-header"><h4>Notes du client</h4></div>
+                <p style="font-size:0.88rem;color:var(--text-secondary);margin:0">${order.customer_notes}</p>
+              </div>
+              ` : ''}
 
               <div class="card">
                 <div class="card-header"><h4>Articles commandés</h4></div>

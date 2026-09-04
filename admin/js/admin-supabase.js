@@ -259,8 +259,18 @@
     async orders() {
       if (!adminSupabase) return [];
       var { data, error } = await adminSupabase.from('orders')
-        .select('id, order_number, status, payment_status, payment_method, subtotal, shipping_cost, discount_total, grand_total, customer_notes, created_at, user_id, items:order_items(product_name, quantity, unit_price), user:users(email)')
+        .select('id, order_number, status, payment_status, payment_method, subtotal, shipping_cost, discount_total, grand_total, customer_notes, created_at, user_id, items:order_items(product_name, quantity, unit_price), user:users(email, first_name, last_name, phone)')
         .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+
+    async addressesByUser(userId) {
+      if (!adminSupabase || !userId) return [];
+      var { data, error } = await adminSupabase.from('addresses')
+        .select('id, address_line1, address_line2, city, province, country, phone, is_default, type')
+        .eq('user_id', userId)
+        .order('is_default', { ascending: false });
       if (error) throw error;
       return data || [];
     },

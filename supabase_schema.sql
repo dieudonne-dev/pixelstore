@@ -573,6 +573,10 @@ DROP POLICY IF EXISTS addresses_self ON public.addresses;
 CREATE POLICY addresses_self ON public.addresses
   FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS addresses_admin ON public.addresses;
+CREATE POLICY addresses_admin ON public.addresses
+  FOR SELECT USING (public.is_admin());
+
 DROP POLICY IF EXISTS carts_self ON public.carts;
 CREATE POLICY carts_self ON public.carts
   FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
