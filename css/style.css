@@ -293,27 +293,26 @@ img {
 
 /* Texte explicatif de l'entreprise (un par image) */
 .hero-slide-text {
-  position: relative;
+  position: absolute;
+  top: 50%;
+  left: max(24px, 8vw);
+  transform: translateY(-50%);
   z-index: 3;
   width: 100%;
   max-width: 560px;
   text-align: left;
-  justify-self: start;
-  align-self: center;
   padding: 24px 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
   opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.8s ease, transform 0.8s ease;
+  transition: opacity 0.8s ease;
   pointer-events: none;
 }
 
 .hero-slide-text.active {
   opacity: 1;
-  transform: translateY(0);
   pointer-events: auto;
 }
 
