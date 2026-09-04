@@ -307,6 +307,12 @@
           orders = await adminDB.orders();
           document.getElementById('chipAll').textContent = orders.length;
           renderOrders();
+          const urlId = new URLSearchParams(window.location.search).get('id');
+          if (urlId) {
+            const target = orders.find(o => String(o.id) === String(urlId));
+            if (target) openOrderModal(target);
+            history.replaceState(null, '', window.location.pathname);
+          }
         }
 
         adminGate(content, load);

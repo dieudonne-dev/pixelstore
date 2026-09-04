@@ -402,16 +402,16 @@
         });
       });
 
-      // Nouvelles commandes récentes
+      // Nouvelles commandes récentes (non lues = notification)
       try {
         var o = await adminSupabase.from('orders')
-          .select('id, order_number, status, created_at, user:users(email)')
+          .select('id, order_number, status, created_at, grand_total, user:users(email)')
           .gte('created_at', dayAgo)
           .order('created_at', { ascending: false }).limit(20);
         (o.data || []).forEach(function (od) {
           out.push({
-            type: 'order', unread: false, icon: 'orders',
-            title: 'Nouvelle commande ' + (od.order_number || '#' + od.id),
+            id: od.id, type: 'order', unread: true, icon: 'orders',
+            title: (od.order_number || '#' + od.id) + ' — ' + formatPrice(od.grand_total),
             meta: (od.user && od.user.email) || 'Client anonyme',
             time: od.created_at, link: 'commandes.html', target: 'order'
           });

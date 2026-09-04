@@ -234,6 +234,7 @@ function initNotifications() {
         const n = notifs[i];
         if (!n) return;
         if (n.type === 'message') { window.location.href = 'contacts.html?id=' + encodeURIComponent(n.id); return; }
+        if (n.type === 'order') { window.location.href = 'commandes.html?id=' + encodeURIComponent(n.id); return; }
         if (n.link) { window.location.href = n.link; }
       };
       el.addEventListener('click', open);
