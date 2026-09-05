@@ -27,7 +27,7 @@ function waitForSupabase(timeoutMs) {
       return;
     }
     var done = false;
-    var finish = function () { if (!done) { done = true; resolve(supabase || null); } };
+    var finish = function () { if (!done) { done = true; resolve(typeof supabase !== 'undefined' ? supabase : null); } };
     document.addEventListener('supabase:ready', finish, { once: true });
     setTimeout(finish, timeout);
   });

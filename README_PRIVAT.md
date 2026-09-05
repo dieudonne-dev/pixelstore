@@ -33,6 +33,7 @@
 - `js/api.js` : couche d'accès données avec **fallback local** (`waitForSupabase()`) ; helpers panier DB `getOrCreateCart`/`syncCartToDb`/`loadCartFromDb`.
 - `js/auth.js` : auth front (inscription/connexion/déconnexion, modale injectée, menu `.header-actions`, `window.PixelAuth` / `window.storeUser` / `window.onUserChange`, sync panier). API : `resetPasswordForEmail`, `extractErrorMessage` (messages FR).
 - `js/filters.js`, `js/fiche.js` : catalogue asynchrone.
+- `categories.html` + `js/categories.js` + `css/categories.css` : **page catégorie** — une page qui liste les produits par catégorie (pills + grille + tri). La catégorie **ne mène pas sur le Store** : produits → `produit.html?id=...`. Supporte `?categorie=slug` (`categories.html?categorie=ordinateurs`) ; toutes les nav/footers pointent vers cette page.
 - `js/wishlist.js` (objet `PixelWishlist`) + `favoris.html` : **favoris** stockés en `localStorage` (`pixelstore_wishlist`). Le cœur de chaque carte produit (Store et favoris) bascule l'état ; badge `wishlist-count` dans le header (`favoris.html`). Non lié à un utilisateur (local au navigateur) — choix simple pour l'instant.
 - Clic sur une carte produit (Store) → `produit.html?id=...` (icônes favoris et bouton panier exclus de la navigation).
 - `js/checkout.js` + `checkout.html` : panier localStorage → DB → RPC `create_order`.
@@ -121,6 +122,18 @@ Fichier idempotent (CREATE OR REPLACE, DROP POLICY IF EXISTS, seeds ON CONFLICT 
   - `admin-supabase.js` / `saveProduct` : en cas d'échec `products_pkey`, re-tente avec `id = max(id)+1` (contournement immédiat, sans SQL).
   - `supabase_schema.sql` : ajout en fin de script d'un `SELECT setval('products_id_seq', ...)` idempotent → **ré-exécuter le schéma dans l'éditeur SQL** pour corriger la base définitivement.
 - **Tests** : insert sans id → 409 (séquence cassée) ; insert avec id=13 → 201 (fallback OK). Produits de test supprimés.
+
+## 8quad. DIAGNOSTIC — page catégorie + favoris (2026-09-05)
+
+- **Signalement utilisateur** : « 0 produit trouvé » sur la page catégorie ; cœurs favoris non cliquables dans le Store → page favoris vide.
+- **Tests headless (Chrome CDP, version LOCALE)** — tout fonctionne :
+  - `catalogue.html` : 12 cartes, clic sur le cœur id=1 → `localStorage['pixelstore_wishlist'] = [1]`, classe `.is-active` posée — **cœur cliquable**.
+  - `categories.html` : 13 produits, compteur « 13 produits trouvés », 7 pills, cœurs OK. **Aucune exception console.**
+- **Conclusion** : le code local est correct. Les symptômes rapportés viennent très probablement d'une **version déployée non à jour** ou d'un **cache navigateur** :
+  - GitHub Pages renvoie **404** sur `categories.html` (les nouveaux fichiers ne sont pas poussés) → ne pas corriger le code, d'abord **commit + push** de la branche `main`, puis **hard refresh (Ctrl+F5)** côté utilisateur.
+- **Correction de robustesse faite** : `js/api.js` ligne 30 — `resolve(supabase || null)` → garde `typeof supabase` avant lecture. Si le global `supabase` (déclaré par `supabase-config.js`) venait à manquer (fichier bloqué/absent), le `waitForSupabase()` n'était **jamais résolu** → catalogue vide silencieusement (« 0 produit »). Désormais le fallback local s'applique.
+- **Base vérifiée via REST** : 13 produits actifs (`is_active=true`), 6 catégories ; le select imbriqué de `getCatalogProducts()` renvoie bien les données.
+- **Non poussé (à faire)** : `categories.html`, `css/categories.css`, `js/categories.js` + màJ nav/footer sur `index.html`, `catalogue.html`, `produit.html`, `panier.html`, `checkout.html`, `commandes.html`, `favoris.html`, `README_PRIVAT.md`, `js/api.js`.
 
 ## 9. Prochaines idées / fichiers de référence (non priorisés)
 

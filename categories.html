@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Store - PixelStore</title>
+  <title>Catégories - PixelStore</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/catalogue.css">
+  <link rel="stylesheet" href="css/categories.css">
   <link rel="stylesheet" href="css/auth.css">
 </head>
 <body>
 
   <!-- ==================== HEADER ==================== -->
-  <!-- (identique à index.html : logo, nav, icônes, menu mobile) -->
   <header class="header">
     <div class="container header-container">
 
@@ -25,8 +25,8 @@
       <nav class="nav">
         <ul class="nav-list">
           <li><a href="index.html" class="nav-link">Accueil</a></li>
-          <li><a href="catalogue.html" class="nav-link active">Store</a></li>
-          <li><a href="categories.html" class="nav-link">Catégories</a></li>
+          <li><a href="catalogue.html" class="nav-link">Store</a></li>
+          <li><a href="categories.html" class="nav-link active">Catégories</a></li>
           <li><a href="index.html#contact" class="nav-link">Contact</a></li>
         </ul>
       </nav>
@@ -77,8 +77,8 @@
       <div class="mobile-nav" id="mobile-nav">
         <ul>
           <li><a href="index.html" class="nav-link">Accueil</a></li>
-          <li><a href="catalogue.html" class="nav-link active">Store</a></li>
-          <li><a href="categories.html" class="nav-link">Catégories</a></li>
+          <li><a href="catalogue.html" class="nav-link">Store</a></li>
+          <li><a href="categories.html" class="nav-link active">Catégories</a></li>
           <li><a href="index.html#contact" class="nav-link">Contact</a></li>
           <li><a href="favoris.html" class="nav-link">Favoris</a></li>
         </ul>
@@ -86,160 +86,50 @@
 
     </div>
   </header>
- 
 
   <!-- ==================== EN-TÊTE DE PAGE ==================== -->
   <section class="page-header">
     <div class="container">
-      <span class="breadcrumb"><a href="index.html">Accueil</a> / <span>Store</span></span>
-      <h1 class="page-title">Notre Store</h1>
-      <p class="page-subtitle">Découvrez notre sélection complète de matériel informatique</p>
+      <span class="breadcrumb"><a href="index.html">Accueil</a> / <span>Catégories</span></span>
+      <h1 class="page-title" id="page-title">Nos catégories</h1>
+      <p class="page-subtitle" id="page-subtitle">Parcourez nos produits par catégorie</p>
     </div>
   </section>
- 
 
-  <!-- ==================== CATALOGUE PRINCIPAL ==================== -->
-  <section class="catalogue-section">
-    <div class="container catalogue-layout">
+  <!-- ==================== PRODUITS PAR CATÉGORIE ==================== -->
+  <section class="categories-section">
+    <div class="container">
 
-      <!-- ========== SIDEBAR FILTRES ========== -->
-      <aside class="filters-sidebar">
-
-        <!-- Recherche -->
-        <div class="filter-block">
-          <h3 class="filter-title">Rechercher</h3>
-          <div class="search-box">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input type="text" id="search-input" placeholder="Nom du produit...">
-          </div>
-        </div>
-
-        <!-- Catégories -->
-        <div class="filter-block">
-          <h3 class="filter-title">Catégorie</h3>
-          <div class="filter-options" id="category-filters">
-            <label class="filter-checkbox">
-              <input type="checkbox" value="all" checked>
-              <span>Toutes les catégories</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="ordinateurs">
-              <span>Ordinateurs</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="claviers">
-              <span>Claviers</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="souris">
-              <span>Souris</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="ecrans">
-              <span>Écrans</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="casques">
-              <span>Casques</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="composants">
-              <span>Composants</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Marques -->
-        <div class="filter-block">
-          <h3 class="filter-title">Marque</h3>
-          <div class="filter-options" id="brand-filters">
-            <label class="filter-checkbox">
-              <input type="checkbox" value="Dell">
-              <span>Dell</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="HP">
-              <span>HP</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="Logitech">
-              <span>Logitech</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="Razer">
-              <span>Razer</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="Samsung">
-              <span>Samsung</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" value="Sony">
-              <span>Sony</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Prix -->
-        <div class="filter-block">
-          <h3 class="filter-title">Prix maximum</h3>
-          <input type="range" id="price-range" min="0" max="1000000" step="10000" value="1000000">
-          <div class="price-range-value">
-            Jusqu'à <span id="price-value">1 000 000</span> BIF
-          </div>
-        </div>
-
-        <!-- Disponibilité -->
-        <div class="filter-block">
-          <label class="filter-checkbox">
-            <input type="checkbox" id="stock-filter">
-            <span>En stock uniquement</span>
-          </label>
-        </div>
-
-        <!-- Bouton réinitialiser -->
-        <button class="btn btn-secondary btn-full" id="reset-filters">Réinitialiser les filtres</button>
-
-      </aside>
-      <!-- ========== FIN SIDEBAR ========== -->
-
-      <!-- ========== ZONE PRODUITS ========== -->
-      <div class="catalogue-main">
-
-        <!-- Barre de résultats + tri -->
-        <div class="catalogue-toolbar">
-          <p class="results-count"><span id="results-count">12</span> produits trouvés</p>
-          <select id="sort-select" class="sort-select">
-            <option value="default">Trier par</option>
-            <option value="price-asc">Prix croissant</option>
-            <option value="price-desc">Prix décroissant</option>
-            <option value="name-asc">Nom (A-Z)</option>
-            <option value="rating-desc">Meilleures notes</option>
-          </select>
-        </div>
-
-        <!-- Grille de produits (remplie dynamiquement par JS) -->
-        <div class="products-grid" id="products-grid">
-          <!-- Les cartes produits sont générées ici par filters.js -->
-        </div>
-
-        <!-- Message si aucun résultat -->
-        <div class="no-results" id="no-results" style="display: none;">
-          <p>Aucun produit ne correspond à votre recherche.</p>
-        </div>
-
+      <!-- Sélecteur de catégories (rempli dynamiquement par categories.js) -->
+      <div class="category-pills" id="category-pills">
+        <!-- <button class="category-pill active">Tous les produits</button> ... -->
       </div>
-      <!-- ========== FIN ZONE PRODUITS ========== -->
+
+      <!-- Barre de résultats + tri -->
+      <div class="catalogue-toolbar">
+        <p class="results-count"><span id="results-count">0</span> produits trouvés</p>
+        <select id="sort-select" class="sort-select">
+          <option value="default">Trier par</option>
+          <option value="price-asc">Prix croissant</option>
+          <option value="price-desc">Prix décroissant</option>
+          <option value="name-asc">Nom (A-Z)</option>
+          <option value="rating-desc">Meilleures notes</option>
+        </select>
+      </div>
+
+      <!-- Grille de produits (remplie dynamiquement par categories.js) -->
+      <div class="products-grid" id="products-grid"></div>
+
+      <!-- Message si aucun résultat -->
+      <div class="no-results" id="no-results" style="display: none;">
+        <p>Aucun produit dans cette catégorie pour le moment.</p>
+      </div>
 
     </div>
   </section>
-  <!-- ==================== FIN CATALOGUE ==================== -->
+  <!-- ==================== FIN PRODUITS PAR CATÉGORIE ==================== -->
 
   <!-- ==================== FOOTER ==================== -->
-  <!-- (identique à index.html) -->
   <footer class="footer">
     <div class="footer-cta">
       <div class="footer-cta-text">
@@ -262,7 +152,7 @@
           <a href="index.html">Pixel<span class="logo-accent">Store</span></a>
         </div>
         <p class="footer-description">
-          Votre destination pour du matériel informatique de qualité, 
+          Votre destination pour du matériel informatique de qualité,
           sélectionné avec soin, au meilleur prix.
         </p>
       </div>
@@ -282,6 +172,9 @@
           <li><a href="categories.html?categorie=ordinateurs">Ordinateurs</a></li>
           <li><a href="categories.html?categorie=claviers">Claviers</a></li>
           <li><a href="categories.html?categorie=souris">Souris</a></li>
+          <li><a href="categories.html?categorie=ecrans">Écrans</a></li>
+          <li><a href="categories.html?categorie=casques">Casques</a></li>
+          <li><a href="categories.html?categorie=composants">Composants</a></li>
         </ul>
       </div>
     </div>
@@ -299,7 +192,7 @@
   <script src="js/api.js"></script>
   <script src="js/wishlist.js"></script>
   <script src="js/auth.js"></script>
-  <script src="js/filters.js"></script>
+  <script src="js/categories.js"></script>
   <script src="js/cart.js"></script>
   <script src="js/main.js"></script>
 </body>
